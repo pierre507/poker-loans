@@ -65,7 +65,7 @@ const getLoanColor = (index, total) => {
   return `rgb(${Math.round(20 + t * 30)}, ${Math.round(200 - t * 80)}, ${Math.round(60 + t * 20)})`;
 };
 
-// ==================== SWIPEABLE ROW (BUG FIX) ====================
+// ==================== SWIPEABLE ROW ====================
 const SwipeableRow = ({ children, onSwipeAction, personId }) => {
   const startX = useRef(0);
   const currentX = useRef(0);
@@ -83,11 +83,11 @@ const SwipeableRow = ({ children, onSwipeAction, personId }) => {
     if (!swiping.current) return;
     const diff = clientX - startX.current;
     if (Math.abs(diff) > 5) hasMoved.current = true;
-    if (diff < 0) { currentX.current = diff; setOffset(Math.max(diff, -200)); }
+    if (diff < 0) { currentX.current = diff; setOffset(Math.max(diff, -160)); }
   };
   const handleEnd = () => {
     swiping.current = false;
-    if (currentX.current < -80) { setShowActions(true); setOffset(-200); }
+    if (currentX.current < -60) { setShowActions(true); setOffset(-160); }
     else { setOffset(0); setShowActions(false); }
     currentX.current = 0;
   };
@@ -95,24 +95,18 @@ const SwipeableRow = ({ children, onSwipeAction, personId }) => {
 
   return (
     <div style={{ position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 200, display: "flex", alignItems: "stretch", zIndex: 3 }}>
+      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 160, display: "flex", alignItems: "stretch", zIndex: 3 }}>
         <button
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeActions(); setTimeout(() => onSwipeAction("partial"), 50); }}
-          style={{ flex: 1, background: "#FFB800", border: "none", color: "#000", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: "0 2px", touchAction: "manipulation" }}>
-          Partial
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeActions(); setTimeout(() => onSwipeAction("collect"), 50); }}
+          style={{ flex: 1, background: "#00C853", border: "none", color: "#000", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "0 4px", touchAction: "manipulation" }}>
+          Collect
         </button>
         <button
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeActions(); setTimeout(() => onSwipeAction("full"), 50); }}
-          style={{ flex: 1, background: "#00C853", border: "none", color: "#000", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: "0 2px", touchAction: "manipulation" }}>
-          Collect All
-        </button>
-        <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeActions(); setTimeout(() => onSwipeAction("add"), 50); }}
-          style={{ flex: 1, background: "#2196F3", border: "none", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: "0 2px", touchAction: "manipulation" }}>
-          Add More
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeActions(); setTimeout(() => onSwipeAction("delete"), 50); }}
+          style={{ flex: 1, background: "#e53935", border: "none", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "0 4px", touchAction: "manipulation" }}>
+          Delete
         </button>
       </div>
       <div
@@ -163,9 +157,11 @@ export default function PokerLoans({ session }) {
   const [sortBy, setSortBy] = useState("amount");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCollectModal, setShowCollectModal] = useState(null);
-  const [showAddMoreModal, setShowAddMoreModal] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showPersonDetail, setShowPersonDetail] = useState(null);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showPersonHistoryModal, setShowPersonHistoryModal] = useState(false);
+  const [personHistorySearch, setPersonHistorySearch] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState({});
   const [showExportModal, setShowExportModal] = useState(false);
   const [showRemindersModal, setShowRemindersModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
@@ -182,8 +178,6 @@ export default function PokerLoans({ session }) {
   const [newNote, setNewNote] = useState("");
   const [collectAmount, setCollectAmount] = useState("");
   const [collectNote, setCollectNote] = useState("");
-  const [addMoreAmount, setAddMoreAmount] = useState("");
-  const [addMoreNote, setAddMoreNote] = useState("");
   const [reminderPerson, setReminderPerson] = useState("");
   const [reminderDate, setReminderDate] = useState("");
   const [reminderNote, setReminderNote] = useState("");
@@ -255,6 +249,30 @@ export default function PokerLoans({ session }) {
   const loans = people.filter((p) => p.type === "loan").sort((a, b) => sortBy === "amount" ? b.balance - a.balance : a.name.localeCompare(b.name));
   const activeList = activeTab === "debts" ? debts : loans;
   const filteredList = activeList.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  // Group people by name (for multi-currency display)
+  const groupedList = (() => {
+    const groups = {};
+    filteredList.forEach((person) => {
+      const key = person.name.toLowerCase();
+      if (!groups[key]) groups[key] = { name: person.name, entries: [], primaryAmount: 0, primaryCurrency: "USD" };
+      groups[key].entries.push(person);
+    });
+    // For each group, determine the primary (largest USD-equivalent display — we just use raw amount as proxy)
+    Object.values(groups).forEach((g) => {
+      g.entries.sort((a, b) => Number(b.balance) - Number(a.balance));
+      g.primaryAmount = Number(g.entries[0].balance);
+      g.primaryCurrency = g.entries[0].currency || "USD";
+    });
+    return Object.values(groups).sort((a, b) => {
+      if (sortBy === "amount") return b.primaryAmount - a.primaryAmount;
+      return a.name.localeCompare(b.name);
+    });
+  })();
+
+  const toggleGroup = (name) => {
+    setExpandedGroups((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
 
   // Net position per currency
   const netPositions = {};
@@ -423,7 +441,7 @@ export default function PokerLoans({ session }) {
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setShowCurrencyModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Currencies">💱</button>
             <button onClick={() => setShowRemindersModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Reminders">🔔</button>
-            <button onClick={() => setShowHistoryModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="History">📋</button>
+            <button onClick={() => setShowPersonHistoryModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="History">📋</button>
             <button onClick={() => setShowExportModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Export">📤</button>
             <button onClick={handleSignOut} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Sign Out">🚪</button>
           </div>
@@ -454,37 +472,89 @@ export default function PokerLoans({ session }) {
 
       {/* ==================== LIST ==================== */}
       <div>
-        {filteredList.length === 0 ? (
+        {groupedList.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>{activeTab === "debts" ? "💸" : "💰"}</div>
             <div style={{ fontSize: 16, fontWeight: 600 }}>No {activeTab} yet</div>
             <div style={{ fontSize: 13, marginTop: 6, color: "#444" }}>Tap the + button to create one</div>
           </div>
         ) : (
-          filteredList.map((person, index) => {
-            const interest = calculateInterest(Number(person.balance), Number(person.interest_rate), person.created_at);
-            const bgColor = activeTab === "debts" ? getDebtColor(index, filteredList.length) : getLoanColor(index, filteredList.length);
-            const curr = person.currency || "USD";
+          groupedList.map((group, groupIndex) => {
+            const isMulti = group.entries.length > 1;
+            const isExpanded = expandedGroups[group.name];
+
+            if (!isMulti) {
+              // Single currency — render as before (swipeable)
+              const person = group.entries[0];
+              const interest = calculateInterest(Number(person.balance), Number(person.interest_rate), person.created_at);
+              const bgColor = activeTab === "debts" ? getDebtColor(groupIndex, groupedList.length) : getLoanColor(groupIndex, groupedList.length);
+              const curr = person.currency || "USD";
+              return (
+                <SwipeableRow key={person.id} personId={person.id} onSwipeAction={(action) => {
+                  if (action === "collect") { setCollectAmount(String(Number(person.balance))); setShowCollectModal(person); }
+                  else if (action === "delete") setShowDeleteConfirm(person);
+                }}>
+                  <div onClick={() => setShowPersonDetail(person)} style={{ background: bgColor, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(0,0,0,0.15)" }}>
+                    <div>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>{person.name}</div>
+                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
+                        {curr !== "USD" && <span style={{ background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 4, marginRight: 6, fontSize: 10, fontWeight: 700 }}>{curr}</span>}
+                        {Number(person.interest_rate) > 0 && <span>{person.interest_rate}% interest • +{formatAmountWithConfig(interest, curr)} accrued</span>}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
+                      <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 18 }}>›</span>
+                    </div>
+                  </div>
+                </SwipeableRow>
+              );
+            }
+
+            // Multi-currency grouped row
+            const bgColor = activeTab === "debts" ? getDebtColor(groupIndex, groupedList.length) : getLoanColor(groupIndex, groupedList.length);
+            const primary = group.entries[0];
+            const primaryCurr = primary.currency || "USD";
             return (
-              <SwipeableRow key={person.id} personId={person.id} onSwipeAction={(action) => {
-                if (action === "full") handleTransaction(person, Number(person.balance), "collect", "Full collection");
-                else if (action === "partial") setShowCollectModal(person);
-                else if (action === "add") setShowAddMoreModal(person);
-              }}>
-                <div onClick={() => setShowPersonDetail(person)} style={{ background: bgColor, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(0,0,0,0.15)" }}>
+              <div key={group.name}>
+                <div onClick={() => toggleGroup(group.name)} style={{ background: bgColor, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(0,0,0,0.15)" }}>
                   <div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>{person.name}</div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>{group.name}</div>
                     <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
-                      {curr !== "USD" && <span style={{ background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 4, marginRight: 6, fontSize: 10, fontWeight: 700 }}>{curr}</span>}
-                      {Number(person.interest_rate) > 0 && <span>{person.interest_rate}% interest • +{formatAmountWithConfig(interest, curr)} accrued</span>}
+                      <span style={{ background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 4, fontSize: 10, fontWeight: 700 }}>+{group.entries.length - 1} more {group.entries.length - 1 === 1 ? "currency" : "currencies"}</span>
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
-                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 18 }}>›</span>
+                    <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatAmountWithConfig(Number(primary.balance), primaryCurr)}</span>
+                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 18, transform: isExpanded ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>›</span>
                   </div>
                 </div>
-              </SwipeableRow>
+                {isExpanded && (
+                  <div style={{ background: "rgba(0,0,0,0.2)" }}>
+                    {group.entries.map((person) => {
+                      const curr = person.currency || "USD";
+                      const interest = calculateInterest(Number(person.balance), Number(person.interest_rate), person.created_at);
+                      return (
+                        <SwipeableRow key={person.id} personId={person.id} onSwipeAction={(action) => {
+                          if (action === "collect") { setCollectAmount(String(Number(person.balance))); setShowCollectModal(person); }
+                          else if (action === "delete") setShowDeleteConfirm(person);
+                        }}>
+                          <div onClick={() => setShowPersonDetail(person)} style={{ padding: "12px 20px 12px 36px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.03)" }}>
+                            <div>
+                              <span style={{ background: "rgba(255,255,255,0.12)", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>{curr}</span>
+                              {Number(person.interest_rate) > 0 && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginLeft: 8 }}>{person.interest_rate}% • +{formatAmountWithConfig(interest, curr)}</span>}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span style={{ fontSize: 17, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#fff" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
+                              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>›</span>
+                            </div>
+                          </div>
+                        </SwipeableRow>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })
         )}
@@ -521,49 +591,60 @@ export default function PokerLoans({ session }) {
       <Modal isOpen={!!showCollectModal} onClose={() => { setShowCollectModal(null); setCollectAmount(""); setCollectNote(""); }} title={`Collect from ${showCollectModal?.name || ""}`}>
         {showCollectModal && (() => {
           const curr = showCollectModal.currency || "USD";
+          const fullBalance = Number(showCollectModal.balance);
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ background: "#222", borderRadius: 12, padding: 16, textAlign: "center" }}>
                 <div style={{ fontSize: 13, color: "#999", marginBottom: 4 }}>Current Balance {curr !== "USD" && <span style={{ color: "#666" }}>({curr})</span>}</div>
-                <div style={{ fontSize: 28, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: showCollectModal.type === "debt" ? "#e53935" : "#43A047" }}>{formatAmountWithConfig(Number(showCollectModal.balance), curr)}</div>
+                <div style={{ fontSize: 28, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: showCollectModal.type === "debt" ? "#e53935" : "#43A047" }}>{formatAmountWithConfig(fullBalance, curr)}</div>
               </div>
-              <button onClick={() => { handleTransaction(showCollectModal, Number(showCollectModal.balance), "collect", collectNote || "Full collection"); setShowCollectModal(null); setCollectAmount(""); setCollectNote(""); }}
-                style={{ padding: "14px", background: "#00C853", border: "none", borderRadius: 12, color: "#000", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>✓ Collect Full {formatAmountWithConfig(Number(showCollectModal.balance), curr)}</button>
-              <div style={{ textAlign: "center", color: "#555", fontSize: 13 }}>— or collect partial —</div>
               <div>
                 <label style={labelStyle}>Amount to Collect ({getAllCurrencyConfig(curr).symbol})</label>
-                <input type="number" placeholder="0.00" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} style={inputStyle} min="0" step="any" />
-                {collectAmount && parseFloat(collectAmount) > Number(showCollectModal.balance) && (
+                <input type="number" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} style={inputStyle} min="0" step="any" autoFocus />
+                {collectAmount && parseFloat(collectAmount) > fullBalance && (
                   <div style={{ fontSize: 12, color: "#FFB800", marginTop: 6, padding: "8px 12px", background: "rgba(255,184,0,0.1)", borderRadius: 8 }}>
-                    ⚠️ Exceeds balance by {formatAmountWithConfig(parseFloat(collectAmount) - Number(showCollectModal.balance), curr)}. {showCollectModal.name} will flip to a <strong>{showCollectModal.type === "debt" ? "loan" : "debt"}</strong>.
+                    ⚠️ Exceeds balance by {formatAmountWithConfig(parseFloat(collectAmount) - fullBalance, curr)}. {showCollectModal.name} will flip to a <strong>{showCollectModal.type === "debt" ? "loan" : "debt"}</strong>.
+                  </div>
+                )}
+                {collectAmount && parseFloat(collectAmount) < fullBalance && parseFloat(collectAmount) > 0 && (
+                  <div style={{ fontSize: 12, color: "#8888aa", marginTop: 6 }}>
+                    Remaining after collection: {formatAmountWithConfig(fullBalance - parseFloat(collectAmount), curr)}
                   </div>
                 )}
               </div>
               <div><label style={labelStyle}>Note — optional</label><input type="text" placeholder="Payment note..." value={collectNote} onChange={(e) => setCollectNote(e.target.value)} style={inputStyle} /></div>
-              <button onClick={() => { const amount = parseFloat(collectAmount); if (!amount || amount <= 0) return; handleTransaction(showCollectModal, amount, "collect", collectNote); setShowCollectModal(null); setCollectAmount(""); setCollectNote(""); }}
-                style={{ padding: "14px", background: "#FFB800", border: "none", borderRadius: 12, color: "#000", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Collect Partial Amount</button>
+              <button onClick={() => { const amount = parseFloat(collectAmount); if (!amount || amount <= 0) return; handleTransaction(showCollectModal, amount, "collect", collectNote || (amount >= fullBalance ? "Full collection" : "Partial collection")); setShowCollectModal(null); setCollectAmount(""); setCollectNote(""); }}
+                style={{ padding: "14px", background: "#00C853", border: "none", borderRadius: 12, color: "#000", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                ✓ Collect {collectAmount ? formatAmountWithConfig(parseFloat(collectAmount) || 0, curr) : formatAmountWithConfig(fullBalance, curr)}
+              </button>
             </div>
           );
         })()}
       </Modal>
 
-      {/* ==================== ADD MORE MODAL ==================== */}
-      <Modal isOpen={!!showAddMoreModal} onClose={() => { setShowAddMoreModal(null); setAddMoreAmount(""); setAddMoreNote(""); }} title={`Add More to ${showAddMoreModal?.name || ""}`}>
-        {showAddMoreModal && (() => {
-          const curr = showAddMoreModal.currency || "USD";
-          return (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ background: "#222", borderRadius: 12, padding: 16, textAlign: "center" }}>
-                <div style={{ fontSize: 13, color: "#999", marginBottom: 4 }}>Current Balance {curr !== "USD" && <span style={{ color: "#666" }}>({curr})</span>}</div>
-                <div style={{ fontSize: 28, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: showAddMoreModal.type === "debt" ? "#e53935" : "#43A047" }}>{formatAmountWithConfig(Number(showAddMoreModal.balance), curr)}</div>
+      {/* ==================== DELETE CONFIRMATION MODAL ==================== */}
+      <Modal isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} title="Confirm Delete">
+        {showDeleteConfirm && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ background: "#2a1a1a", borderRadius: 12, padding: 16, textAlign: "center", border: "1px solid #4a2a2a" }}>
+              <div style={{ fontSize: 14, color: "#ccc", marginBottom: 8 }}>Are you sure you want to delete this record?</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>{showDeleteConfirm.name}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: showDeleteConfirm.type === "debt" ? "#e53935" : "#43A047", marginTop: 4 }}>
+                {formatAmountWithConfig(Number(showDeleteConfirm.balance), showDeleteConfirm.currency || "USD")}
               </div>
-              <div><label style={labelStyle}>Additional Amount ({getAllCurrencyConfig(curr).symbol})</label><input type="number" placeholder="0.00" value={addMoreAmount} onChange={(e) => setAddMoreAmount(e.target.value)} style={inputStyle} min="0" step="any" autoFocus /></div>
-              <div><label style={labelStyle}>Note — optional</label><input type="text" placeholder="Reason..." value={addMoreNote} onChange={(e) => setAddMoreNote(e.target.value)} style={inputStyle} /></div>
-              <button onClick={() => { const amount = parseFloat(addMoreAmount); if (!amount || amount <= 0) return; handleTransaction(showAddMoreModal, amount, "add", addMoreNote); setShowAddMoreModal(null); setAddMoreAmount(""); setAddMoreNote(""); }}
-                style={{ padding: "14px", background: "#2196F3", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>+ Add {addMoreAmount ? formatAmountWithConfig(parseFloat(addMoreAmount) || 0, curr) : `${getAllCurrencyConfig(curr).symbol}0.00`} More</button>
+              <div style={{ fontSize: 12, color: "#999", marginTop: 6 }}>This action cannot be undone.</div>
             </div>
-          );
-        })()}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => setShowDeleteConfirm(null)} style={{ flex: 1, padding: "14px", background: "#333", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Cancel</button>
+              <button onClick={async () => {
+                await supabase.from("transactions").delete().eq("person_id", showDeleteConfirm.id);
+                await supabase.from("people").delete().eq("id", showDeleteConfirm.id);
+                setShowDeleteConfirm(null);
+                fetchData();
+              }} style={{ flex: 1, padding: "14px", background: "#e53935", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Delete</button>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* ==================== PERSON DETAIL MODAL ==================== */}
@@ -615,46 +696,105 @@ export default function PokerLoans({ session }) {
                 )}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => { setShowPersonDetail(null); setShowCollectModal(showPersonDetail); }} style={{ flex: 1, padding: "12px", background: "#00C853", border: "none", borderRadius: 10, color: "#000", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Collect</button>
-                <button onClick={() => { setShowPersonDetail(null); setShowAddMoreModal(showPersonDetail); }} style={{ flex: 1, padding: "12px", background: "#2196F3", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Add More</button>
+                <button onClick={() => { setShowPersonDetail(null); setShowCollectModal(showPersonDetail); setCollectAmount(String(Number(showPersonDetail.balance))); }} style={{ flex: 1, padding: "12px", background: "#00C853", border: "none", borderRadius: 10, color: "#000", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Collect</button>
               </div>
             </div>
           );
         })()}
       </Modal>
 
-      {/* ==================== HISTORY MODAL ==================== */}
-      <Modal isOpen={showHistoryModal} onClose={() => setShowHistoryModal(false)} title="Transaction History">
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {transactions.length === 0 && completedRecords.length === 0 ? <div style={{ color: "#555", textAlign: "center", padding: 30 }}>No history yet</div> : (
-            <>
-              {completedRecords.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ ...labelStyle, marginBottom: 8, color: "#00C853" }}>✓ Completed</div>
-                  {completedRecords.map((r) => (
-                    <div key={r.id} style={{ background: "#1a2e1a", borderRadius: 8, padding: "10px 12px", marginBottom: 6, border: "1px solid #2a4a2a" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ fontWeight: 600, color: "#ccc" }}>{r.name}</span>
-                        <span style={{ fontFamily: "'Space Mono', monospace", color: "#00C853" }}>{formatAmountWithConfig(Number(r.original_amount), r.currency || "USD")}</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{r.type} • {r.currency || "USD"} • Completed {formatDate(r.completed_at)}</div>
+      {/* ==================== PERSON SEARCH HISTORY MODAL ==================== */}
+      <Modal isOpen={showPersonHistoryModal} onClose={() => { setShowPersonHistoryModal(false); setPersonHistorySearch(""); }} title="Transaction History">
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ position: "relative" }}>
+            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#666", fontSize: 14 }}>🔍</span>
+            <input type="text" placeholder="Search by name..." value={personHistorySearch} onChange={(e) => setPersonHistorySearch(e.target.value)}
+              style={{ ...inputStyle, paddingLeft: 36 }} autoFocus />
+          </div>
+          {(() => {
+            const query = personHistorySearch.toLowerCase().trim();
+            // Get all unique person names from transactions and completed records
+            const allNames = new Set();
+            transactions.forEach((t) => allNames.add(t.person_name));
+            completedRecords.forEach((r) => allNames.add(r.name));
+            people.forEach((p) => allNames.add(p.name));
+
+            const filteredNames = query
+              ? [...allNames].filter((n) => n.toLowerCase().includes(query)).sort()
+              : [...allNames].sort();
+
+            if (filteredNames.length === 0 && query) {
+              return <div style={{ color: "#555", textAlign: "center", padding: 20 }}>No results for "{personHistorySearch}"</div>;
+            }
+
+            if (!query) {
+              return <div style={{ color: "#666", textAlign: "center", padding: 20, fontSize: 14 }}>Type a name to see their complete transaction history</div>;
+            }
+
+            return filteredNames.map((name) => {
+              const personTxns = transactions.filter((t) => t.person_name === name).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+              const personCompleted = completedRecords.filter((r) => r.name === name).sort((a, b) => new Date(a.completed_at) - new Date(b.completed_at));
+              const personActive = people.filter((p) => p.name === name);
+
+              return (
+                <div key={name} style={{ background: "#1a1a1a", borderRadius: 12, border: "1px solid #333", overflow: "hidden", marginBottom: 4 }}>
+                  <div style={{ padding: "12px 14px", borderBottom: "1px solid #2a2a2a" }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>{name}</div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                      {personActive.map((p) => (
+                        <span key={p.id} style={{ fontSize: 12, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: p.type === "debt" ? "#e53935" : "#43A047", background: p.type === "debt" ? "rgba(229,57,53,0.1)" : "rgba(67,160,71,0.1)", padding: "3px 8px", borderRadius: 6 }}>
+                          {p.type === "debt" ? "Owes" : "Owed"} {formatAmountWithConfig(Number(p.balance), p.currency || "USD")}
+                        </span>
+                      ))}
+                      {personActive.length === 0 && <span style={{ fontSize: 12, color: "#555" }}>No active balances</span>}
                     </div>
-                  ))}
-                </div>
-              )}
-              <div style={{ ...labelStyle, marginBottom: 8 }}>All Transactions</div>
-              {transactions.map((t) => (
-                <div key={t.id} style={{ background: "#222", borderRadius: 8, padding: "10px 12px", marginBottom: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#ccc" }}>{t.person_name} — {t.type.replace("_", " ")}</div>
-                    {t.note && <div style={{ fontSize: 11, color: "#777" }}>{t.note}</div>}
-                    <div style={{ fontSize: 11, color: "#555" }}>{formatDateTime(t.created_at)}</div>
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: t.type === "added" || t.type === "created" ? "#FFB800" : "#00C853" }}>{formatAmountWithConfig(Number(t.amount), t.currency || "USD")}</div>
+                  <div style={{ maxHeight: 300, overflowY: "auto" }}>
+                    {personTxns.length === 0 && personCompleted.length === 0 ? (
+                      <div style={{ color: "#555", textAlign: "center", padding: 16, fontSize: 13 }}>No transaction records</div>
+                    ) : (
+                      <>
+                        {personTxns.map((t) => {
+                          const tCurr = t.currency || "USD";
+                          return (
+                            <div key={t.id} style={{ padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1f1f1f" }}>
+                              <div>
+                                <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600 }}>
+                                  {t.type === "created" && "Created"}{t.type === "partial_collect" && "Partial Collection"}{t.type === "completed" && "✓ Completed"}{t.type === "flipped" && "⇄ Flipped"}{t.type === "added" && "Added More"}
+                                </div>
+                                {t.note && <div style={{ fontSize: 10, color: "#777", marginTop: 1 }}>{t.note}</div>}
+                                <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>{formatDateTime(t.created_at)}</div>
+                              </div>
+                              <div style={{ textAlign: "right" }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: t.type === "added" || t.type === "created" ? "#FFB800" : "#00C853" }}>
+                                  {t.type === "added" || t.type === "created" ? "+" : "-"}{formatAmountWithConfig(Number(t.amount), tCurr)}
+                                </div>
+                                {tCurr !== "USD" && <div style={{ fontSize: 9, color: "#555" }}>{tCurr}</div>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {personCompleted.map((r) => {
+                          const rCurr = r.currency || "USD";
+                          return (
+                            <div key={r.id} style={{ padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1f1f1f", background: "rgba(0,200,83,0.03)" }}>
+                              <div>
+                                <div style={{ fontSize: 12, color: "#00C853", fontWeight: 600 }}>✓ Fully Collected</div>
+                                <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>Originally: {r.type} • {formatDate(r.completed_at)}</div>
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#00C853" }}>
+                                {formatAmountWithConfig(Number(r.original_amount), rCurr)}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
+                  </div>
                 </div>
-              ))}
-            </>
-          )}
+              );
+            });
+          })()}
         </div>
       </Modal>
 
