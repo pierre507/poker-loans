@@ -327,20 +327,20 @@ export default function PokerLoans({ session }) {
 
   // ==================== TRANSACTIONS ====================
   const handleTransaction = async (person, amount, action, note = "") => {
-    let newBalance, newType, transactionType;
+    let newBalance, updatedType, transactionType;
     const currency = person.currency || "USD";
     if (action === "collect") {
       newBalance = Number(person.balance) - amount;
-      if (newBalance < 0) { newType = person.type === "debt" ? "loan" : "debt"; newBalance = Math.abs(newBalance); transactionType = "flipped"; }
+      if (newBalance < 0) { updatedType = person.type === "debt" ? "loan" : "debt"; newBalance = Math.abs(newBalance); transactionType = "flipped"; }
       else if (newBalance === 0) { transactionType = "completed"; }
-      else { newType = person.type; transactionType = "partial_collect"; }
+      else { updatedType = person.type; transactionType = "partial_collect"; }
     } else if (action === "add") {
-      newBalance = Number(person.balance) + amount; newType = person.type; transactionType = "added";
+      newBalance = Number(person.balance) + amount; updatedType = person.type; transactionType = "added";
     }
     await supabase.from("transactions").insert({
       user_id: userId, person_id: person.id, person_name: person.name,
       type: transactionType, amount, balance_before: person.balance,
-      balance_after: newBalance, entry_type: newType || person.type,
+      balance_after: newBalance, entry_type: updatedType || person.type,
       previous_type: person.type, currency, note: note || "",
     });
     if (transactionType === "completed") {
@@ -353,7 +353,7 @@ export default function PokerLoans({ session }) {
     } else {
       const updatedNotes = note ? [...(person.notes || []), { text: note, date: new Date().toISOString() }] : person.notes || [];
       await supabase.from("people").update({
-        balance: newBalance, type: newType || person.type, notes: updatedNotes, updated_at: new Date().toISOString(),
+        balance: newBalance, type: updatedType || person.type, notes: updatedNotes, updated_at: new Date().toISOString(),
       }).eq("id", person.id);
     }
     fetchData();
@@ -539,7 +539,7 @@ export default function PokerLoans({ session }) {
                           if (action === "collect") { setCollectAmount(String(Number(person.balance))); setShowCollectModal(person); }
                           else if (action === "delete") setShowDeleteConfirm(person);
                         }}>
-                          <div onClick={() => setShowPersonDetail(person)} style={{ padding: "12px 20px 12px 36px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.03)" }}>
+                          <div onClick={() => setShowPersonDetail(person)} style={{ padding: "12px 20px 12px 36px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "#1a1a1a" }}>
                             <div>
                               <span style={{ background: "rgba(255,255,255,0.12)", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>{curr}</span>
                               {Number(person.interest_rate) > 0 && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginLeft: 8 }}>{person.interest_rate}% • +{formatAmountWithConfig(interest, curr)}</span>}
