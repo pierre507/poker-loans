@@ -223,10 +223,17 @@ export default function PokerLoans({ session }) {
           Object.assign(newRates, FIAT_TO_USD);
         }
 
-        // 2. Collect crypto currency codes for CoinGecko lookup
-        // Build set of codes that are known fiat (from custom currencies marked as fiat)
+        // 2. Build sets of known crypto and fiat codes
+        const knownCryptoCodes = new Set(Object.keys(COINGECKO_IDS));
         const customFiatCodes = new Set();
-        customCurrencies.forEach((c) => { if (c.isFiat) customFiatCodes.add(c.code.toUpperCase()); });
+        customCurrencies.forEach((c) => {
+          if (c.isFiat) customFiatCodes.add(c.code.toUpperCase());
+          else knownCryptoCodes.add(c.code.toUpperCase()); // custom crypto
+        });
+        // Built-in crypto codes
+        CURRENCIES.forEach((c) => {
+          if (!FIAT_TO_USD[c.code]) knownCryptoCodes.add(c.code);
+        });
 
         const allCodes = new Set();
         people.forEach((p) => allCodes.add(p.currency || "USD"));
@@ -238,9 +245,18 @@ export default function PokerLoans({ session }) {
         allCodes.forEach((code) => {
           const upper = code.toUpperCase();
           if (upper === "USD") return;
-          if (newRates[upper]) return; // already have from fiat API
-          if (customFiatCodes.has(upper)) return; // user marked as fiat, skip crypto lookup
-          const geckoId = COINGECKO_IDS[upper] || code.toLowerCase();
+          if (customFiatCodes.has(upper)) return; // user explicitly marked as fiat
+          // If it's a known crypto, always look it up (even if fiat API returned a rate for same code)
+          if (knownCryptoCodes.has(upper)) {
+            const geckoId = COINGECKO_IDS[upper] || code.toLowerCase();
+            geckoIds.push(geckoId);
+            codeToGeckoId[upper] = geckoId;
+            return;
+          }
+          // For unknown codes, skip if fiat API already has a rate
+          if (newRates[upper]) return;
+          // Otherwise try CoinGecko as fallback
+          const geckoId = code.toLowerCase();
           geckoIds.push(geckoId);
           codeToGeckoId[upper] = geckoId;
         });
@@ -660,9 +676,14 @@ export default function PokerLoans({ session }) {
                         {Number(person.interest_rate) > 0 && <span>{person.interest_rate}% interest • +{formatAmountWithConfig(interest, curr)} accrued</span>}
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
-                      <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 18 }}>›</span>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
+                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 18 }}>›</span>
+                      </div>
+                      {curr !== "USD" && usdRates[curr.toUpperCase()] && (
+                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontFamily: "'Space Mono', monospace" }}>{formatUsdEstimate(toUsd(Number(person.balance), curr))}</span>
+                      )}
                     </div>
                   </div>
                 </SwipeableRow>
@@ -700,9 +721,14 @@ export default function PokerLoans({ session }) {
                               <span style={{ background: "rgba(255,255,255,0.12)", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>{curr}</span>
                               {Number(person.interest_rate) > 0 && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginLeft: 8 }}>{person.interest_rate}% • +{formatAmountWithConfig(interest, curr)}</span>}
                             </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <span style={{ fontSize: 17, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#fff" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
-                              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>›</span>
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <span style={{ fontSize: 17, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#fff" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
+                                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>›</span>
+                              </div>
+                              {curr !== "USD" && usdRates[curr.toUpperCase()] && (
+                                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontFamily: "'Space Mono', monospace" }}>{formatUsdEstimate(toUsd(Number(person.balance), curr))}</span>
+                              )}
                             </div>
                           </div>
                         </SwipeableRow>
