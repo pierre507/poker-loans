@@ -196,7 +196,13 @@ export default function PokerLoans({ session }) {
   const [reminderPerson, setReminderPerson] = useState("");
   const [reminderDate, setReminderDate] = useState("");
   const [reminderNote, setReminderNote] = useState("");
-  const [usdRates, setUsdRates] = useState({ ...FIAT_TO_USD });
+  const [usdRates, setUsdRates] = useState({
+    ...FIAT_TO_USD,
+    // Fallback crypto rates (updated by live API when available)
+    BTC: 84000, ETH: 2100, USDT: 1, USDC: 1, SOL: 130,
+    ADA: 0.70, DOT: 6.5, DOGE: 0.17, XRP: 2.3, AVAX: 22,
+    MATIC: 0.38, LINK: 14, UNI: 11, LTC: 90, NEAR: 5,
+  });
   const [creating, setCreating] = useState(false);
   const [expandedLoansTab, setExpandedLoansTab] = useState(false);
   const [expandedDebtsTab, setExpandedDebtsTab] = useState(false);
@@ -285,7 +291,7 @@ export default function PokerLoans({ session }) {
       }
     };
     fetchPrices();
-    const interval = setInterval(fetchPrices, 60000);
+    const interval = setInterval(fetchPrices, 300000); // refresh every 5 min
     return () => clearInterval(interval);
   }, [people, customCurrencies]);
 
