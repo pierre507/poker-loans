@@ -13,6 +13,18 @@ const CURRENCIES = [
   { code: "USDC", symbol: "◉", name: "USD Coin", decimals: 2 },
 ];
 
+// Known CoinGecko IDs for built-in cryptos
+const COINGECKO_IDS = {
+  BTC: "bitcoin", ETH: "ethereum", USDT: "tether", USDC: "usd-coin",
+  SOL: "solana", ADA: "cardano", DOT: "polkadot", DOGE: "dogecoin",
+  XRP: "ripple", AVAX: "avalanche-2", MATIC: "matic-network", LINK: "chainlink",
+  UNI: "uniswap", ATOM: "cosmos", LTC: "litecoin", NEAR: "near",
+  APT: "aptos", SUI: "sui", ARB: "arbitrum", OP: "optimism",
+};
+
+// Approximate fiat-to-USD rates (updated periodically)
+const FIAT_TO_USD = { USD: 1, CAD: 0.74, EUR: 1.08, GBP: 1.27 };
+
 const getCurrencyConfig = (code) => {
   const found = CURRENCIES.find((c) => c.code === code);
   if (found) return found;
@@ -181,6 +193,73 @@ export default function PokerLoans({ session }) {
   const [reminderPerson, setReminderPerson] = useState("");
   const [reminderDate, setReminderDate] = useState("");
   const [reminderNote, setReminderNote] = useState("");
+  const [usdRates, setUsdRates] = useState({ ...FIAT_TO_USD });
+  const [creating, setCreating] = useState(false);
+  const [expandedLoansTab, setExpandedLoansTab] = useState(false);
+  const [expandedDebtsTab, setExpandedDebtsTab] = useState(false);
+
+  // Fetch live crypto prices from CoinGecko + fiat rates from exchangerate-api
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const newRates = { USD: 1 };
+
+        // 1. Fetch live fiat rates
+        try {
+          const fiatRes = await fetch("https://open.er-api.com/v6/latest/USD");
+          if (fiatRes.ok) {
+            const fiatData = await fiatRes.json();
+            if (fiatData.rates) {
+              Object.entries(fiatData.rates).forEach(([code, rate]) => {
+                if (rate > 0) newRates[code] = 1 / rate;
+              });
+            }
+          }
+        } catch (e) {
+          Object.assign(newRates, FIAT_TO_USD);
+        }
+
+        // 2. Collect all currency codes for crypto lookup
+        const allCodes = new Set();
+        people.forEach((p) => allCodes.add(p.currency || "USD"));
+        customCurrencies.forEach((c) => allCodes.add(c.code));
+        CURRENCIES.forEach((c) => allCodes.add(c.code));
+
+        const geckoIds = [];
+        const codeToGeckoId = {};
+        allCodes.forEach((code) => {
+          if (newRates[code] && code !== "USD") return;
+          if (code === "USD") return;
+          const geckoId = COINGECKO_IDS[code.toUpperCase()] || code.toLowerCase();
+          geckoIds.push(geckoId);
+          codeToGeckoId[code.toUpperCase()] = geckoId;
+        });
+
+        if (geckoIds.length > 0) {
+          try {
+            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${geckoIds.join(",")}&vs_currencies=usd`);
+            if (res.ok) {
+              const data = await res.json();
+              Object.entries(codeToGeckoId).forEach(([code, geckoId]) => {
+                if (data[geckoId]?.usd) {
+                  newRates[code] = data[geckoId].usd;
+                }
+              });
+            }
+          } catch (e) {
+            console.error("CoinGecko fetch error:", e);
+          }
+        }
+
+        setUsdRates(newRates);
+      } catch (e) {
+        console.error("Price fetch error:", e);
+      }
+    };
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 60000);
+    return () => clearInterval(interval);
+  }, [people, customCurrencies]);
 
   // Load custom currencies from localStorage
   useEffect(() => {
@@ -250,22 +329,32 @@ export default function PokerLoans({ session }) {
   const activeList = activeTab === "debts" ? debts : loans;
   const filteredList = activeList.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
+  // Convert any currency amount to estimated USD
+  const toUsd = (amount, currencyCode) => {
+    const code = (currencyCode || "USD").toUpperCase();
+    const rate = usdRates[code];
+    if (rate) return Number(amount) * rate;
+    return Number(amount); // fallback: assume 1:1
+  };
+
+  const formatUsdEstimate = (usdAmount) => {
+    return `~$${Math.abs(usdAmount).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  };
+
   // Group people by name (for multi-currency display)
   const groupedList = (() => {
     const groups = {};
     filteredList.forEach((person) => {
       const key = person.name.toLowerCase();
-      if (!groups[key]) groups[key] = { name: person.name, entries: [], primaryAmount: 0, primaryCurrency: "USD" };
+      if (!groups[key]) groups[key] = { name: person.name, entries: [], totalUsd: 0 };
       groups[key].entries.push(person);
+      groups[key].totalUsd += toUsd(Number(person.balance), person.currency || "USD");
     });
-    // For each group, determine the primary (largest USD-equivalent display — we just use raw amount as proxy)
     Object.values(groups).forEach((g) => {
-      g.entries.sort((a, b) => Number(b.balance) - Number(a.balance));
-      g.primaryAmount = Number(g.entries[0].balance);
-      g.primaryCurrency = g.entries[0].currency || "USD";
+      g.entries.sort((a, b) => toUsd(Number(b.balance), b.currency || "USD") - toUsd(Number(a.balance), a.currency || "USD"));
     });
     return Object.values(groups).sort((a, b) => {
-      if (sortBy === "amount") return b.primaryAmount - a.primaryAmount;
+      if (sortBy === "amount") return b.totalUsd - a.totalUsd;
       return a.name.localeCompare(b.name);
     });
   })();
@@ -283,16 +372,20 @@ export default function PokerLoans({ session }) {
     else netPositions[curr] -= Number(p.balance);
   });
 
-  // Totals per currency for tabs
+  // Totals per currency for tabs + USD estimate
   const debtsByCurrency = {};
+  let debtsUsdTotal = 0;
   const loansByCurrency = {};
+  let loansUsdTotal = 0;
   debts.forEach((p) => {
     const c = p.currency || "USD";
     debtsByCurrency[c] = (debtsByCurrency[c] || 0) + Number(p.balance);
+    debtsUsdTotal += toUsd(Number(p.balance), c);
   });
   loans.forEach((p) => {
     const c = p.currency || "USD";
     loansByCurrency[c] = (loansByCurrency[c] || 0) + Number(p.balance);
+    loansUsdTotal += toUsd(Number(p.balance), c);
   });
 
   const formatTotals = (byCurrency) => {
@@ -304,25 +397,56 @@ export default function PokerLoans({ session }) {
 
   // ==================== CREATE ====================
   const handleCreate = async () => {
+    if (creating) return;
     if (!newName.trim() || !newAmount || parseFloat(newAmount) <= 0) return;
-    const amount = parseFloat(newAmount);
-    const { data: person, error: pErr } = await supabase.from("people").insert({
-      user_id: userId, name: newName.trim(), type: newType, balance: amount,
-      original_amount: amount, interest_rate: parseFloat(newInterestRate) || 0,
-      currency: newCurrency,
-      notes: newNote ? [{ text: newNote, date: new Date().toISOString() }] : [],
-    }).select().single();
-    if (pErr) { console.error(pErr); return; }
-    await supabase.from("transactions").insert({
-      user_id: userId, person_id: person.id, person_name: person.name,
-      type: "created", amount, balance_after: amount, entry_type: newType,
-      currency: newCurrency,
-      note: newNote || `Created ${newType} for ${person.name}`,
-    });
-    setNewName(""); setNewAmount(""); setNewType("debt"); setNewCurrency("USD");
-    setNewInterestRate(""); setNewNote("");
-    setShowCreateModal(false);
-    fetchData();
+    setCreating(true);
+    try {
+      const amount = parseFloat(newAmount);
+      const trimmedName = newName.trim();
+
+      // Check for existing person with same name, type, and currency
+      const existing = people.find(
+        (p) => p.name.toLowerCase() === trimmedName.toLowerCase() && p.type === newType && (p.currency || "USD") === newCurrency
+      );
+
+      if (existing) {
+        // Merge: add to existing balance
+        const newBalance = Number(existing.balance) + amount;
+        const updatedNotes = newNote
+          ? [...(existing.notes || []), { text: newNote, date: new Date().toISOString() }]
+          : existing.notes || [];
+        await supabase.from("people").update({
+          balance: newBalance, notes: updatedNotes, updated_at: new Date().toISOString(),
+        }).eq("id", existing.id);
+        await supabase.from("transactions").insert({
+          user_id: userId, person_id: existing.id, person_name: existing.name,
+          type: "added", amount, balance_before: existing.balance, balance_after: newBalance,
+          entry_type: newType, currency: newCurrency,
+          note: newNote || `Added ${formatAmountWithConfig(amount, newCurrency)} to existing ${newType}`,
+        });
+      } else {
+        // Create new entry
+        const { data: person, error: pErr } = await supabase.from("people").insert({
+          user_id: userId, name: trimmedName, type: newType, balance: amount,
+          original_amount: amount, interest_rate: parseFloat(newInterestRate) || 0,
+          currency: newCurrency,
+          notes: newNote ? [{ text: newNote, date: new Date().toISOString() }] : [],
+        }).select().single();
+        if (pErr) { console.error(pErr); setCreating(false); return; }
+        await supabase.from("transactions").insert({
+          user_id: userId, person_id: person.id, person_name: person.name,
+          type: "created", amount, balance_after: amount, entry_type: newType,
+          currency: newCurrency,
+          note: newNote || `Created ${newType} for ${person.name}`,
+        });
+      }
+      setNewName(""); setNewAmount(""); setNewType("debt"); setNewCurrency("USD");
+      setNewInterestRate(""); setNewNote("");
+      setShowCreateModal(false);
+      fetchData();
+    } finally {
+      setCreating(false);
+    }
   };
 
   // ==================== TRANSACTIONS ====================
@@ -407,30 +531,27 @@ export default function PokerLoans({ session }) {
     <div style={{ minHeight: "100vh", background: "#111", color: "#fff", fontFamily: "'DM Sans', sans-serif", maxWidth: 480, margin: "0 auto", position: "relative", paddingBottom: 80 }}>
 
       {/* ==================== NET POSITION BAR ==================== */}
-      {Object.keys(netPositions).length > 0 && (
-        <div style={{
-          background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
-          padding: "10px 20px",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 12, borderBottom: "1px solid #2a2a4a",
-        }}>
-          <span style={{ fontSize: 12, color: "#8888aa", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Net Position</span>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-            {Object.entries(netPositions).map(([currency, net]) => {
-              const isPositive = net > 0;
-              const isZero = net === 0;
-              return (
-                <span key={currency} style={{
-                  fontSize: 15, fontWeight: 800, fontFamily: "'Space Mono', monospace",
-                  color: isZero ? "#888" : isPositive ? "#00E676" : "#FF5252",
-                }}>
-                  {isPositive ? "+" : ""}{formatAmountWithConfig(Math.abs(net), currency)}{net < 0 ? " owed" : ""}
-                </span>
-              );
-            })}
+      {Object.keys(netPositions).length > 0 && (() => {
+        const netUsd = Object.entries(netPositions).reduce((sum, [curr, net]) => sum + (net > 0 ? toUsd(net, curr) : -toUsd(Math.abs(net), curr)), 0);
+        const isPositive = netUsd > 0;
+        const isZero = Math.abs(netUsd) < 0.01;
+        return (
+          <div style={{
+            background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+            padding: "10px 20px",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            gap: 12, borderBottom: "1px solid #2a2a4a",
+          }}>
+            <span style={{ fontSize: 12, color: "#8888aa", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Net Position</span>
+            <span style={{
+              fontSize: 18, fontWeight: 800, fontFamily: "'Space Mono', monospace",
+              color: isZero ? "#888" : isPositive ? "#00E676" : "#FF5252",
+            }}>
+              {isPositive ? "+" : "-"}{formatUsdEstimate(netUsd)}
+            </span>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ==================== HEADER ==================== */}
       <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)", padding: "20px 20px 0", borderBottom: "1px solid #222" }}>
@@ -447,13 +568,36 @@ export default function PokerLoans({ session }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: 0 }}>
-          <button onClick={() => setActiveTab("loans")} style={{ flex: 1, padding: "12px 0", background: activeTab === "loans" ? "#43A047" : "#1e1e1e", border: "none", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", borderRadius: "10px 0 0 0", fontFamily: "'Space Mono', monospace", letterSpacing: 1, transition: "all 0.2s" }}>
-            <div>LOANS</div><div style={{ fontSize: 14, marginTop: 2 }}>{formatTotals(loansByCurrency)}</div>
+          <button onClick={() => { setActiveTab("loans"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "loans" ? "#43A047" : "#1e1e1e", border: "none", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", borderRadius: "10px 0 0 0", fontFamily: "'Space Mono', monospace", letterSpacing: 1, transition: "all 0.2s" }}>
+            <div>LOANS</div>
+            <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(loansUsdTotal)}</div>
+            {Object.keys(loansByCurrency).length > 1 && activeTab === "loans" && (
+              <div onClick={(e) => { e.stopPropagation(); setExpandedLoansTab(!expandedLoansTab); }} style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, cursor: "pointer" }}>
+                {expandedLoansTab ? "▲ hide details" : "▼ show details"}
+              </div>
+            )}
           </button>
-          <button onClick={() => setActiveTab("debts")} style={{ flex: 1, padding: "12px 0", background: activeTab === "debts" ? "#e53935" : "#1e1e1e", border: "none", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", borderRadius: "0 10px 0 0", fontFamily: "'Space Mono', monospace", letterSpacing: 1, transition: "all 0.2s" }}>
-            <div>DEBTS</div><div style={{ fontSize: 14, marginTop: 2 }}>{formatTotals(debtsByCurrency)}</div>
+          <button onClick={() => { setActiveTab("debts"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "debts" ? "#e53935" : "#1e1e1e", border: "none", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", borderRadius: "0 10px 0 0", fontFamily: "'Space Mono', monospace", letterSpacing: 1, transition: "all 0.2s" }}>
+            <div>DEBTS</div>
+            <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(debtsUsdTotal)}</div>
+            {Object.keys(debtsByCurrency).length > 1 && activeTab === "debts" && (
+              <div onClick={(e) => { e.stopPropagation(); setExpandedDebtsTab(!expandedDebtsTab); }} style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, cursor: "pointer" }}>
+                {expandedDebtsTab ? "▲ hide details" : "▼ show details"}
+              </div>
+            )}
           </button>
         </div>
+        {/* Currency breakdown accordion */}
+        {((activeTab === "loans" && expandedLoansTab) || (activeTab === "debts" && expandedDebtsTab)) && (
+          <div style={{ background: "#1a1a1a", padding: "8px 20px", borderBottom: "1px solid #333" }}>
+            {Object.entries(activeTab === "loans" ? loansByCurrency : debtsByCurrency).map(([curr, total]) => (
+              <div key={curr} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                <span style={{ fontSize: 12, color: "#888" }}>{curr}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#ccc" }}>{formatAmountWithConfig(total, curr)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Search & Sort */}
@@ -513,19 +657,17 @@ export default function PokerLoans({ session }) {
 
             // Multi-currency grouped row
             const bgColor = activeTab === "debts" ? getDebtColor(groupIndex, groupedList.length) : getLoanColor(groupIndex, groupedList.length);
-            const primary = group.entries[0];
-            const primaryCurr = primary.currency || "USD";
             return (
               <div key={group.name}>
                 <div onClick={() => toggleGroup(group.name)} style={{ background: bgColor, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(0,0,0,0.15)" }}>
                   <div>
                     <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>{group.name}</div>
                     <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
-                      <span style={{ background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 4, fontSize: 10, fontWeight: 700 }}>+{group.entries.length - 1} more {group.entries.length - 1 === 1 ? "currency" : "currencies"}</span>
+                      <span style={{ background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 4, fontSize: 10, fontWeight: 700 }}>{group.entries.length} {group.entries.length === 1 ? "currency" : "currencies"}</span>
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatAmountWithConfig(Number(primary.balance), primaryCurr)}</span>
+                    <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatUsdEstimate(group.totalUsd)}</span>
                     <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 18, transform: isExpanded ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>›</span>
                   </div>
                 </div>
@@ -583,7 +725,7 @@ export default function PokerLoans({ session }) {
           </div>
           <div><label style={labelStyle}>Annual Interest Rate (%) — optional</label><input type="number" placeholder="0" value={newInterestRate} onChange={(e) => setNewInterestRate(e.target.value)} style={inputStyle} min="0" step="0.1" /></div>
           <div><label style={labelStyle}>Note — optional</label><textarea placeholder="Add a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} style={{ ...inputStyle, minHeight: 60, resize: "vertical" }} /></div>
-          <button onClick={handleCreate} style={{ padding: "14px", background: newType === "debt" ? "#e53935" : "#43A047", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>+ CREATE {newType === "debt" ? "DEBT" : "LOAN"}</button>
+          <button onClick={handleCreate} disabled={creating} style={{ padding: "14px", background: creating ? "#555" : (newType === "debt" ? "#e53935" : "#43A047"), border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: creating ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", marginTop: 4, opacity: creating ? 0.6 : 1 }}>{creating ? "Creating..." : `+ CREATE ${newType === "debt" ? "DEBT" : "LOAN"}`}</button>
         </div>
       </Modal>
 
