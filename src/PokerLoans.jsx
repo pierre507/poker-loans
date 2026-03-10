@@ -182,6 +182,7 @@ export default function PokerLoans({ session }) {
   const [newCustomSymbol, setNewCustomSymbol] = useState("");
   const [newCustomName, setNewCustomName] = useState("");
   const [newCustomDecimals, setNewCustomDecimals] = useState("2");
+  const [newCustomType, setNewCustomType] = useState("crypto");
   const [newName, setNewName] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [newType, setNewType] = useState("debt");
@@ -197,6 +198,9 @@ export default function PokerLoans({ session }) {
   const [creating, setCreating] = useState(false);
   const [expandedLoansTab, setExpandedLoansTab] = useState(false);
   const [expandedDebtsTab, setExpandedDebtsTab] = useState(false);
+  const [showAddMoreInline, setShowAddMoreInline] = useState(null);
+  const [addMoreInlineAmount, setAddMoreInlineAmount] = useState("");
+  const [addMoreInlineNote, setAddMoreInlineNote] = useState("");
 
   // Fetch live crypto prices from CoinGecko + fiat rates from exchangerate-api
   useEffect(() => {
@@ -219,7 +223,11 @@ export default function PokerLoans({ session }) {
           Object.assign(newRates, FIAT_TO_USD);
         }
 
-        // 2. Collect all currency codes for crypto lookup
+        // 2. Collect crypto currency codes for CoinGecko lookup
+        // Build set of codes that are known fiat (from custom currencies marked as fiat)
+        const customFiatCodes = new Set();
+        customCurrencies.forEach((c) => { if (c.isFiat) customFiatCodes.add(c.code.toUpperCase()); });
+
         const allCodes = new Set();
         people.forEach((p) => allCodes.add(p.currency || "USD"));
         customCurrencies.forEach((c) => allCodes.add(c.code));
@@ -228,11 +236,13 @@ export default function PokerLoans({ session }) {
         const geckoIds = [];
         const codeToGeckoId = {};
         allCodes.forEach((code) => {
-          if (newRates[code] && code !== "USD") return;
-          if (code === "USD") return;
-          const geckoId = COINGECKO_IDS[code.toUpperCase()] || code.toLowerCase();
+          const upper = code.toUpperCase();
+          if (upper === "USD") return;
+          if (newRates[upper]) return; // already have from fiat API
+          if (customFiatCodes.has(upper)) return; // user marked as fiat, skip crypto lookup
+          const geckoId = COINGECKO_IDS[upper] || code.toLowerCase();
           geckoIds.push(geckoId);
-          codeToGeckoId[code.toUpperCase()] = geckoId;
+          codeToGeckoId[upper] = geckoId;
         });
 
         if (geckoIds.length > 0) {
@@ -298,11 +308,12 @@ export default function PokerLoans({ session }) {
       symbol: newCustomSymbol.trim(),
       name: newCustomName.trim() || newCustomCode.trim().toUpperCase(),
       decimals: parseInt(newCustomDecimals) || 2,
+      isFiat: newCustomType === "fiat",
     };
     const updated = [...customCurrencies, newCurr];
     setCustomCurrencies(updated);
     localStorage.setItem("poker-loans-custom-currencies", JSON.stringify(updated));
-    setNewCustomCode(""); setNewCustomSymbol(""); setNewCustomName(""); setNewCustomDecimals("2");
+    setNewCustomCode(""); setNewCustomSymbol(""); setNewCustomName(""); setNewCustomDecimals("2"); setNewCustomType("crypto");
   };
 
   // ==================== DATA LOADING ====================
@@ -337,8 +348,9 @@ export default function PokerLoans({ session }) {
     return Number(amount); // fallback: assume 1:1
   };
 
-  const formatUsdEstimate = (usdAmount) => {
-    return `~$${Math.abs(usdAmount).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const formatUsdEstimate = (usdAmount, isEstimate = true) => {
+    const prefix = isEstimate ? "~" : "";
+    return `${prefix}$${Math.abs(usdAmount).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
   // Group people by name (for multi-currency display)
@@ -547,7 +559,7 @@ export default function PokerLoans({ session }) {
               fontSize: 18, fontWeight: 800, fontFamily: "'Space Mono', monospace",
               color: isZero ? "#888" : isPositive ? "#00E676" : "#FF5252",
             }}>
-              {isPositive ? "+" : "-"}{formatUsdEstimate(netUsd)}
+              {isPositive ? "+" : "-"}{formatUsdEstimate(netUsd, Object.keys(netPositions).some(c => c !== "USD"))}
             </span>
           </div>
         );
@@ -570,7 +582,7 @@ export default function PokerLoans({ session }) {
         <div style={{ display: "flex", gap: 0 }}>
           <button onClick={() => { setActiveTab("loans"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "loans" ? "#43A047" : "#1e1e1e", border: "none", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", borderRadius: "10px 0 0 0", fontFamily: "'Space Mono', monospace", letterSpacing: 1, transition: "all 0.2s" }}>
             <div>LOANS</div>
-            <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(loansUsdTotal)}</div>
+            <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(loansUsdTotal, Object.keys(loansByCurrency).some(c => c !== "USD"))}</div>
             {Object.keys(loansByCurrency).length > 1 && activeTab === "loans" && (
               <div onClick={(e) => { e.stopPropagation(); setExpandedLoansTab(!expandedLoansTab); }} style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, cursor: "pointer" }}>
                 {expandedLoansTab ? "▲ hide details" : "▼ show details"}
@@ -579,7 +591,7 @@ export default function PokerLoans({ session }) {
           </button>
           <button onClick={() => { setActiveTab("debts"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "debts" ? "#e53935" : "#1e1e1e", border: "none", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", borderRadius: "0 10px 0 0", fontFamily: "'Space Mono', monospace", letterSpacing: 1, transition: "all 0.2s" }}>
             <div>DEBTS</div>
-            <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(debtsUsdTotal)}</div>
+            <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(debtsUsdTotal, Object.keys(debtsByCurrency).some(c => c !== "USD"))}</div>
             {Object.keys(debtsByCurrency).length > 1 && activeTab === "debts" && (
               <div onClick={(e) => { e.stopPropagation(); setExpandedDebtsTab(!expandedDebtsTab); }} style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, cursor: "pointer" }}>
                 {expandedDebtsTab ? "▲ hide details" : "▼ show details"}
@@ -667,7 +679,7 @@ export default function PokerLoans({ session }) {
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatUsdEstimate(group.totalUsd)}</span>
+                    <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatUsdEstimate(group.totalUsd, group.entries.some(p => (p.currency || "USD") !== "USD"))}</span>
                     <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 18, transform: isExpanded ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>›</span>
                   </div>
                 </div>
@@ -839,7 +851,22 @@ export default function PokerLoans({ session }) {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => { setShowPersonDetail(null); setShowCollectModal(showPersonDetail); setCollectAmount(String(Number(showPersonDetail.balance))); }} style={{ flex: 1, padding: "12px", background: "#00C853", border: "none", borderRadius: 10, color: "#000", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Collect</button>
+                <button onClick={() => setShowAddMoreInline(showAddMoreInline === showPersonDetail.id ? null : showPersonDetail.id)} style={{ flex: 1, padding: "12px", background: "#2196F3", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Add More</button>
               </div>
+              {showAddMoreInline === showPersonDetail.id && (
+                <div style={{ background: "#222", borderRadius: 10, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div><label style={labelStyle}>Amount to Add ({getAllCurrencyConfig(curr).symbol})</label><input type="number" placeholder="0.00" value={addMoreInlineAmount} onChange={(e) => setAddMoreInlineAmount(e.target.value)} style={inputStyle} min="0" step="any" autoFocus /></div>
+                  <div><label style={labelStyle}>Note — optional</label><input type="text" placeholder="Reason..." value={addMoreInlineNote} onChange={(e) => setAddMoreInlineNote(e.target.value)} style={inputStyle} /></div>
+                  <button onClick={async () => {
+                    const amount = parseFloat(addMoreInlineAmount);
+                    if (!amount || amount <= 0) return;
+                    await handleTransaction(showPersonDetail, amount, "add", addMoreInlineNote || `Added ${formatAmountWithConfig(amount, curr)}`);
+                    setAddMoreInlineAmount(""); setAddMoreInlineNote(""); setShowAddMoreInline(null); setShowPersonDetail(null);
+                  }} style={{ padding: "12px", background: "#2196F3", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>
+                    + Add {addMoreInlineAmount ? formatAmountWithConfig(parseFloat(addMoreInlineAmount) || 0, curr) : `${getAllCurrencyConfig(curr).symbol}0.00`}
+                  </button>
+                </div>
+              )}
             </div>
           );
         })()}
@@ -978,6 +1005,11 @@ export default function PokerLoans({ session }) {
           )}
           <div style={{ borderTop: "1px solid #333", paddingTop: 16 }}>
             <div style={{ ...labelStyle }}>Add Custom Currency</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+              <button onClick={() => setNewCustomType("crypto")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: newCustomType === "crypto" ? "#2196F3" : "#2a2a2a", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>🪙 Crypto</button>
+              <button onClick={() => setNewCustomType("fiat")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: newCustomType === "fiat" ? "#43A047" : "#2a2a2a", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>💵 Fiat</button>
+            </div>
+            <div style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>{newCustomType === "crypto" ? "Price looked up via CoinGecko by code" : "Exchange rate looked up via forex API by code"}</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
               <input type="text" placeholder="Code (e.g. SOL)" value={newCustomCode} onChange={(e) => setNewCustomCode(e.target.value)} style={{ ...inputStyle, flex: 1 }} maxLength={10} />
               <input type="text" placeholder="Symbol (e.g. ◎)" value={newCustomSymbol} onChange={(e) => setNewCustomSymbol(e.target.value)} style={{ ...inputStyle, width: 70 }} maxLength={5} />
