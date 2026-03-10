@@ -35,13 +35,15 @@ const formatAmount = (amount, currencyCode = "USD") => {
   const config = getCurrencyConfig(currencyCode);
   const abs = Math.abs(Number(amount));
   if (config.decimals > 2) {
-    // Crypto: trim trailing zeros but keep at least 2 decimals
     const fixed = abs.toFixed(config.decimals);
-    const trimmed = fixed.replace(/0+$/, "").replace(/\.$/, "");
-    const parts = trimmed.split(".");
-    const decimals = parts[1] || "";
-    const padded = decimals.length < 2 ? trimmed + "0".repeat(2 - decimals.length) : trimmed;
-    return `${config.symbol}${padded}`;
+    const parts = fixed.split(".");
+    const intPart = parts[0];
+    let decPart = parts[1] || "";
+    while (decPart.length > 2 && decPart.endsWith("0")) {
+      decPart = decPart.slice(0, -1);
+    }
+    const formattedInt = Number(intPart).toLocaleString("en-US");
+    return `${config.symbol}${formattedInt}.${decPart}`;
   }
   return `${config.symbol}${abs.toLocaleString("en-US", { minimumFractionDigits: config.decimals, maximumFractionDigits: config.decimals })}`;
 };
@@ -309,11 +311,17 @@ export default function PokerLoans({ session }) {
     const sep = config.symbol.length > 1 ? " " : "";
     if (config.decimals > 2) {
       const fixed = abs.toFixed(config.decimals);
-      const trimmed = fixed.replace(/0+$/, "").replace(/\.$/, "");
-      const parts = trimmed.split(".");
-      const decimals = parts[1] || "";
-      const padded = decimals.length < 2 ? trimmed + "0".repeat(2 - decimals.length) : trimmed;
-      return `${config.symbol}${sep}${padded}`;
+      // Trim trailing zeros but keep at least 2 decimal places
+      const parts = fixed.split(".");
+      const intPart = parts[0];
+      let decPart = parts[1] || "";
+      // Remove trailing zeros but keep minimum 2
+      while (decPart.length > 2 && decPart.endsWith("0")) {
+        decPart = decPart.slice(0, -1);
+      }
+      // Format integer part with commas
+      const formattedInt = Number(intPart).toLocaleString("en-US");
+      return `${config.symbol}${sep}${formattedInt}.${decPart}`;
     }
     const displayDecimals = Math.max(config.decimals, 2);
     return `${config.symbol}${sep}${abs.toLocaleString("en-US", { minimumFractionDigits: displayDecimals, maximumFractionDigits: displayDecimals })}`;
