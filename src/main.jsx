@@ -3,10 +3,12 @@ import ReactDOM from 'react-dom/client'
 import { supabase } from './supabaseClient'
 import Auth from './Auth'
 import PokerLoans from './PokerLoans'
+import BankrollTracker from './BankrollTracker'
 
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState("loans") // "loans" or "bankroll"
 
   useEffect(() => {
     // Load font
@@ -44,7 +46,13 @@ function App() {
     )
   }
 
-  return session ? <PokerLoans session={session} /> : <Auth />
+  if (!session) return <Auth />
+
+  if (currentPage === "bankroll") {
+    return <BankrollTracker session={session} onBack={() => setCurrentPage("loans")} />
+  }
+
+  return <PokerLoans session={session} onBankroll={() => setCurrentPage("bankroll")} />
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
