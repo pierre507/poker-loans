@@ -612,12 +612,12 @@ export default function PokerLoans({ session, onBack }) {
             background: "#fff",
             padding: "10px 20px",
             display: "flex", alignItems: "center", justifyContent: "center",
-            gap: 12, borderBottom: "1px solid #2a2a4a",
+            gap: 12, borderBottom: "1px solid #e8e6e2",
           }}>
-            <span style={{ fontSize: 12, color: "#999", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Net Position</span>
+            <span style={{ fontSize: 11, color: "#999", fontWeight: 500, textTransform: "uppercase", letterSpacing: 1 }}>Net Position</span>
             <span style={{
               fontSize: 18, fontWeight: 500, fontFamily: "'DM Sans', sans-serif",
-              color: isZero ? "#888" : isPositive ? "#00E676" : "#FF5252",
+              color: isZero ? "#999" : isPositive ? "#2e7d32" : "#c62828",
             }}>
               {isPositive ? "+" : "-"}{formatUsdEstimate(netUsd, Object.keys(netPositions).some(c => c !== "USD"))}
             </span>
@@ -640,19 +640,19 @@ export default function PokerLoans({ session, onBack }) {
             <button onClick={handleSignOut} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Sign Out">🚪</button>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 0 }}>
-          <button onClick={() => { setActiveTab("loans"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "loans" ? "#43A047" : "#1e1e1e", border: "none", color: "#1a1a1a", fontWeight: 500, fontSize: 14, cursor: "pointer", borderRadius: "10px 0 0 0", fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.2s" }}>
+        <div style={{ display: "flex", gap: 0, borderBottom: "1px solid #e8e6e2" }}>
+          <button onClick={() => { setActiveTab("loans"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "14px 0 12px", background: "transparent", border: "none", borderBottom: activeTab === "loans" ? "2px solid #2e7d32" : "2px solid transparent", color: activeTab === "loans" ? "#2e7d32" : "#999", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s" }}>
             <div>LOANS</div>
-            <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(loansUsdTotal, Object.keys(loansByCurrency).some(c => c !== "USD"))}</div>
+            <div style={{ fontSize: 16, marginTop: 2, fontWeight: 500, color: activeTab === "loans" ? "#2e7d32" : "#999" }}>{formatUsdEstimate(loansUsdTotal, Object.keys(loansByCurrency).some(c => c !== "USD"))}</div>
             {Object.keys(loansByCurrency).length > 1 && activeTab === "loans" && (
               <div onClick={(e) => { e.stopPropagation(); setExpandedLoansTab(!expandedLoansTab); }} style={{ fontSize: 10, color: "#aaa", marginTop: 4, cursor: "pointer" }}>
                 {expandedLoansTab ? "▲ hide details" : "▼ show details"}
               </div>
             )}
           </button>
-          <button onClick={() => { setActiveTab("debts"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "debts" ? "#e53935" : "#1e1e1e", border: "none", color: "#1a1a1a", fontWeight: 500, fontSize: 14, cursor: "pointer", borderRadius: "0 10px 0 0", fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.2s" }}>
+          <button onClick={() => { setActiveTab("debts"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "14px 0 12px", background: "transparent", border: "none", borderBottom: activeTab === "debts" ? "2px solid #c62828" : "2px solid transparent", color: activeTab === "debts" ? "#c62828" : "#999", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all 0.2s" }}>
             <div>DEBTS</div>
-            <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(debtsUsdTotal, Object.keys(debtsByCurrency).some(c => c !== "USD"))}</div>
+            <div style={{ fontSize: 16, marginTop: 2, fontWeight: 500, color: activeTab === "debts" ? "#c62828" : "#999" }}>{formatUsdEstimate(debtsUsdTotal, Object.keys(debtsByCurrency).some(c => c !== "USD"))}</div>
             {Object.keys(debtsByCurrency).length > 1 && activeTab === "debts" && (
               <div onClick={(e) => { e.stopPropagation(); setExpandedDebtsTab(!expandedDebtsTab); }} style={{ fontSize: 10, color: "#aaa", marginTop: 4, cursor: "pointer" }}>
                 {expandedDebtsTab ? "▲ hide details" : "▼ show details"}
@@ -787,7 +787,7 @@ export default function PokerLoans({ session, onBack }) {
 
       {/* FAB */}
       <button onClick={() => { setNewType(activeTab === "debts" ? "debt" : "loan"); setShowCreateModal(true); }}
-        style={{ position: "fixed", bottom: 24, right: "calc(50% - 210px)", width: 56, height: 56, borderRadius: "50%", background: activeTab === "debts" ? "#e53935" : "#43A047", border: "none", color: "#1a1a1a", fontSize: 28, fontWeight: 300, cursor: "pointer", boxShadow: `0 4px 16px ${activeTab === "debts" ? "rgba(198,40,40,0.25)" : "rgba(46,125,50,0.25)"}`, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>+</button>
+        style={{ position: "fixed", bottom: 24, right: "calc(50% - 210px)", width: 56, height: 56, borderRadius: "50%", background: activeTab === "debts" ? "#c62828" : "#2e7d32", border: "none", color: "#fff", fontSize: 28, fontWeight: 300, cursor: "pointer", boxShadow: `0 4px 16px ${activeTab === "debts" ? "rgba(198,40,40,0.25)" : "rgba(46,125,50,0.25)"}`, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>+</button>
 
       {/* ==================== CREATE MODAL ==================== */}
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={`Create New ${newType === "debt" ? "Debt" : "Loan"}`}>
