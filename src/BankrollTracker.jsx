@@ -259,9 +259,21 @@ export default function BankrollTracker({ session, onBack }) {
   const monthProfit = monthSessions.reduce((sum, s) => sum + Number(s.net_profit || 0), 0);
   const monthMinutes = monthSessions.reduce((sum, s) => sum + Number(s.playing_minutes || 0), 0);
 
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, "0")}`;
+  const lastMonthName = lastMonthDate.toLocaleDateString("en-US", { month: "short" });
+  const lastMonthSessions = sessions.filter(s => s.start_time?.startsWith(lastMonth));
+  const lastMonthProfit = lastMonthSessions.reduce((sum, s) => sum + Number(s.net_profit || 0), 0);
+  const lastMonthMinutes = lastMonthSessions.reduce((sum, s) => sum + Number(s.playing_minutes || 0), 0);
+
   const yearSessions = sessions.filter(s => s.start_time?.startsWith(thisYear));
   const yearProfit = yearSessions.reduce((sum, s) => sum + Number(s.net_profit || 0), 0);
   const yearMinutes = yearSessions.reduce((sum, s) => sum + Number(s.playing_minutes || 0), 0);
+
+  const lastYear = String(Number(thisYear) - 1);
+  const lastYearSessions = sessions.filter(s => s.start_time?.startsWith(lastYear));
+  const lastYearProfit = lastYearSessions.reduce((sum, s) => sum + Number(s.net_profit || 0), 0);
+  const lastYearMinutes = lastYearSessions.reduce((sum, s) => sum + Number(s.playing_minutes || 0), 0);
 
   // Unique values for filters/forms
   const allGames = [...new Set(sessions.map(s => s.game).filter(Boolean))].sort();
@@ -521,6 +533,13 @@ export default function BankrollTracker({ session, onBack }) {
                     {monthProfit >= 0 ? "+" : "-"}{formatCurrencyFull(monthProfit)}
                   </div>
                   <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{monthSessions.length} sessions • {formatHoursFull(monthMinutes)}hrs</div>
+                  <div style={{ borderTop: "1px solid #2a2a2a", marginTop: 8, paddingTop: 8 }}>
+                    <div style={{ fontSize: 10, color: "#666", textTransform: "uppercase", letterSpacing: 0.5 }}>{lastMonthName}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: lastMonthProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 2 }}>
+                      {lastMonthProfit >= 0 ? "+" : "-"}{formatCurrencyFull(lastMonthProfit)}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#444", marginTop: 1 }}>{lastMonthSessions.length} sessions • {formatHoursFull(lastMonthMinutes)}hrs</div>
+                  </div>
                 </div>
                 <div style={{ ...cardStyle, cursor: "default" }}>
                   <div style={statLabel}>This Year</div>
@@ -528,6 +547,13 @@ export default function BankrollTracker({ session, onBack }) {
                     {yearProfit >= 0 ? "+" : "-"}{formatCurrencyFull(yearProfit)}
                   </div>
                   <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{yearSessions.length} sessions • {formatHoursFull(yearMinutes)}hrs</div>
+                  <div style={{ borderTop: "1px solid #2a2a2a", marginTop: 8, paddingTop: 8 }}>
+                    <div style={{ fontSize: 10, color: "#666", textTransform: "uppercase", letterSpacing: 0.5 }}>{lastYear}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: lastYearProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 2 }}>
+                      {lastYearProfit >= 0 ? "+" : "-"}{formatCurrencyFull(lastYearProfit)}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#444", marginTop: 1 }}>{lastYearSessions.length} sessions • {formatHoursFull(lastYearMinutes)}hrs</div>
+                  </div>
                 </div>
               </div>
 
@@ -592,8 +618,11 @@ export default function BankrollTracker({ session, onBack }) {
 
               {/* Yearly Breakdown */}
               <div style={{ ...cardStyle, cursor: "default" }}>
-                <div style={{ ...statLabel, marginBottom: 10 }}>By Year</div>
-                {yearlyData.reverse().map(([year, d]) => (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div style={statLabel}>By Year</div>
+                  <button onClick={() => setView("profit")} style={{ background: "none", border: "none", color: "#FFB800", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>View All →</button>
+                </div>
+                {yearlyData.reverse().slice(0, 5).map(([year, d]) => (
                   <div key={year} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #222" }}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: "#ccc" }}>{year}</div>
