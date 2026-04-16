@@ -33,18 +33,18 @@ const formatHoursFull = (minutes) => {
   return `${(Number(minutes) / 60).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 };
 
-const inputStyle = { width: "100%", padding: "12px 14px", background: "#2a2a2a", border: "1px solid #444", borderRadius: 10, color: "#fff", fontSize: 15, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" };
+const inputStyle = { width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid #e8e6e2", borderRadius: 10, color: "#1a1a1a", fontSize: 15, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" };
 const labelStyle = { display: "block", marginBottom: 6, fontSize: 13, color: "#999", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" };
 
 // ==================== MODAL ====================
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
-    <div onClick={onClose} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(4px)" }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 16, padding: 24, width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto", border: "1px solid #333" }}>
+    <div onClick={onClose} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(4px)" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "#f8f7f5", borderRadius: 16, padding: 24, width: "100%", maxWidth: 480, maxHeight: "85vh", overflowY: "auto", border: "1px solid #e8e6e2" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>{title}</h2>
-          <button onClick={onClose} style={{ background: "#333", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, color: "#1a1a1a", fontFamily: "'DM Sans', sans-serif" }}>{title}</h2>
+          <button onClick={onClose} style={{ background: "#e8e6e2", border: "none", color: "#1a1a1a", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
         </div>
         {children}
       </div>
@@ -53,7 +53,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 };
 
 // ==================== MINI BAR CHART ====================
-const MiniBarChart = ({ data, color = "#00E676", height = 120 }) => {
+const MiniBarChart = ({ data, color = "#2e7d32", height = 120 }) => {
   if (!data || data.length === 0) return null;
   const max = Math.max(...data.map(d => Math.abs(d.value)), 1);
   const barW = Math.max(4, Math.min(20, (300 / data.length) - 2));
@@ -65,7 +65,7 @@ const MiniBarChart = ({ data, color = "#00E676", height = 120 }) => {
         return (
           <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
             <div style={{ width: barW, height: h, background: isNeg ? "#FF5252" : color, borderRadius: 2, opacity: 0.85 }} title={`${d.label}: ${formatCurrencyFull(d.value)}`} />
-            {data.length <= 24 && <div style={{ fontSize: 8, color: "#555", whiteSpace: "nowrap" }}>{d.label}</div>}
+            {data.length <= 24 && <div style={{ fontSize: 8, color: "#bbb", whiteSpace: "nowrap" }}>{d.label}</div>}
           </div>
         );
       })}
@@ -74,7 +74,7 @@ const MiniBarChart = ({ data, color = "#00E676", height = 120 }) => {
 };
 
 // ==================== CUMULATIVE LINE (SVG) ====================
-const CumulativeLine = ({ data, height = 140, color = "#00E676" }) => {
+const CumulativeLine = ({ data, height = 140, color = "#2e7d32" }) => {
   if (!data || data.length < 2) return null;
   const w = 360;
   const pad = 10;
@@ -457,7 +457,7 @@ export default function BankrollTracker({ session, onLoans }) {
   // ==================== RENDER ====================
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#f8f7f5", display: "flex", alignItems: "center", justifyContent: "center", color: "#1a1a1a", fontFamily: "'DM Sans', sans-serif" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📊</div>
           <div>Loading bankroll...</div>
@@ -466,26 +466,26 @@ export default function BankrollTracker({ session, onLoans }) {
     );
   }
 
-  const cardStyle = { background: "#1e1e1e", borderRadius: 14, padding: "16px 18px", cursor: "pointer", border: "1px solid #2a2a2a", transition: "all 0.2s" };
-  const statLabel = { fontSize: 11, color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 };
-  const statValue = { fontSize: 24, fontWeight: 800, fontFamily: "'Space Mono', monospace", marginTop: 4 };
+  const cardStyle = { background: "#fff", borderRadius: 14, padding: "16px 18px", cursor: "pointer", border: "1px solid #e8e6e2", transition: "all 0.2s" };
+  const statLabel = { fontSize: 11, color: "#999", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 };
+  const statValue = { fontSize: 24, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", marginTop: 4 };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#111", color: "#fff", fontFamily: "'DM Sans', sans-serif", maxWidth: 480, margin: "0 auto", position: "relative", paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: "#f8f7f5", color: "#1a1a1a", fontFamily: "'DM Sans', sans-serif", maxWidth: 480, margin: "0 auto", position: "relative", paddingBottom: 80 }}>
 
       {/* ==================== TOP BAR ==================== */}
-      <div style={{ background: "#1a1a1a", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #222" }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, fontFamily: "'Space Mono', monospace" }}>
-          POKER<span style={{ color: "#FFB800" }}>MGR</span>
+      <div style={{ background: "#fff", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e8e6e2" }}>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>
+          POKER<span style={{ color: "#b8860b" }}>MGR</span>
         </h1>
         <div style={{ display: "flex", gap: 8 }}>
-          {onLoans && <button onClick={onLoans} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Loans & Debts">💰</button>}
+          {onLoans && <button onClick={onLoans} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Loans & Debts">💰</button>}
           {sessions.length === 0 ? (
-            <button onClick={() => setView("import")} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Import</button>
+            <button onClick={() => setView("import")} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Import</button>
           ) : (
-            <button onClick={() => setView(view === "sessions" ? "dashboard" : "sessions")} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>📋</button>
+            <button onClick={() => setView(view === "sessions" ? "dashboard" : "sessions")} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>📋</button>
           )}
-          <button onClick={handleSignOut} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Sign Out">🚪</button>
+          <button onClick={handleSignOut} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Sign Out">🚪</button>
         </div>
       </div>
 
@@ -494,13 +494,13 @@ export default function BankrollTracker({ session, onLoans }) {
         <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
 
           {sessions.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#bbb" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
               <div style={{ fontSize: 16, fontWeight: 600 }}>No sessions yet</div>
-              <div style={{ fontSize: 13, marginTop: 6, color: "#444" }}>Import your PBT data or add your first session</div>
+              <div style={{ fontSize: 13, marginTop: 6, color: "#ccc" }}>Import your PBT data or add your first session</div>
               <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "center" }}>
-                <button onClick={() => setView("import")} style={{ padding: "12px 24px", background: "#FFB800", border: "none", borderRadius: 10, color: "#000", fontWeight: 700, cursor: "pointer", fontSize: 14 }}>📤 Import CSV</button>
-                <button onClick={() => setView("add")} style={{ padding: "12px 24px", background: "#43A047", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14 }}>+ Add Session</button>
+                <button onClick={() => setView("import")} style={{ padding: "12px 24px", background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14 }}>📤 Import CSV</button>
+                <button onClick={() => setView("add")} style={{ padding: "12px 24px", background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14 }}>+ Add Session</button>
               </div>
             </div>
           ) : (
@@ -513,7 +513,7 @@ export default function BankrollTracker({ session, onLoans }) {
                 </div>
                 <div onClick={() => setView("hours")} style={{ ...cardStyle }}>
                   <div style={statLabel}>Hours Played</div>
-                  <div style={{ ...statValue, color: "#FFB800" }}>{formatHoursFull(totalMinutes)}</div>
+                  <div style={{ ...statValue, color: "#b8860b" }}>{formatHoursFull(totalMinutes)}</div>
                 </div>
                 <div onClick={() => setView("profit")} style={{ ...cardStyle }}>
                   <div style={statLabel}>Hourly Rate</div>
@@ -521,8 +521,8 @@ export default function BankrollTracker({ session, onLoans }) {
                 </div>
                 <div onClick={() => setView("sessions")} style={{ ...cardStyle }}>
                   <div style={statLabel}>Win Rate</div>
-                  <div style={{ ...statValue, color: "#82B1FF" }}>{winRate.toFixed(1)}%</div>
-                  <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{sessions.length} sessions</div>
+                  <div style={{ ...statValue, color: "#1565c0" }}>{winRate.toFixed(1)}%</div>
+                  <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>{sessions.length} sessions</div>
                 </div>
               </div>
 
@@ -530,30 +530,30 @@ export default function BankrollTracker({ session, onLoans }) {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <div style={{ ...cardStyle, cursor: "default" }}>
                   <div style={statLabel}>This Month</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: monthProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>
+                  <div style={{ fontSize: 18, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: monthProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>
                     {monthProfit >= 0 ? "+" : "-"}{formatCurrencyFull(monthProfit)}
                   </div>
-                  <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{monthSessions.length} sessions • {formatHoursFull(monthMinutes)}hrs</div>
-                  <div style={{ borderTop: "1px solid #2a2a2a", marginTop: 8, paddingTop: 8 }}>
-                    <div style={{ fontSize: 10, color: "#666", textTransform: "uppercase", letterSpacing: 0.5 }}>{lastMonthName}</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: lastMonthProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>{monthSessions.length} sessions • {formatHoursFull(monthMinutes)}hrs</div>
+                  <div style={{ borderTop: "1px solid #e8e6e2", marginTop: 8, paddingTop: 8 }}>
+                    <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5 }}>{lastMonthName}</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: lastMonthProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 2 }}>
                       {lastMonthProfit >= 0 ? "+" : "-"}{formatCurrencyFull(lastMonthProfit)}
                     </div>
-                    <div style={{ fontSize: 10, color: "#444", marginTop: 1 }}>{lastMonthSessions.length} sessions • {formatHoursFull(lastMonthMinutes)}hrs</div>
+                    <div style={{ fontSize: 10, color: "#ccc", marginTop: 1 }}>{lastMonthSessions.length} sessions • {formatHoursFull(lastMonthMinutes)}hrs</div>
                   </div>
                 </div>
                 <div style={{ ...cardStyle, cursor: "default" }}>
                   <div style={statLabel}>This Year</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: yearProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>
+                  <div style={{ fontSize: 18, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: yearProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>
                     {yearProfit >= 0 ? "+" : "-"}{formatCurrencyFull(yearProfit)}
                   </div>
-                  <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{yearSessions.length} sessions • {formatHoursFull(yearMinutes)}hrs</div>
-                  <div style={{ borderTop: "1px solid #2a2a2a", marginTop: 8, paddingTop: 8 }}>
-                    <div style={{ fontSize: 10, color: "#666", textTransform: "uppercase", letterSpacing: 0.5 }}>{lastYear}</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: lastYearProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>{yearSessions.length} sessions • {formatHoursFull(yearMinutes)}hrs</div>
+                  <div style={{ borderTop: "1px solid #e8e6e2", marginTop: 8, paddingTop: 8 }}>
+                    <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5 }}>{lastYear}</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: lastYearProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 2 }}>
                       {lastYearProfit >= 0 ? "+" : "-"}{formatCurrencyFull(lastYearProfit)}
                     </div>
-                    <div style={{ fontSize: 10, color: "#444", marginTop: 1 }}>{lastYearSessions.length} sessions • {formatHoursFull(lastYearMinutes)}hrs</div>
+                    <div style={{ fontSize: 10, color: "#ccc", marginTop: 1 }}>{lastYearSessions.length} sessions • {formatHoursFull(lastYearMinutes)}hrs</div>
                   </div>
                 </div>
               </div>
@@ -569,12 +569,12 @@ export default function BankrollTracker({ session, onLoans }) {
                 <div style={{ ...statLabel, marginBottom: 10 }}>By Game</div>
                 {Object.entries(byGame).sort((a, b) => b[1].profit - a[1].profit).slice(0, 5).map(([game, d]) => (
                   <div key={game} onClick={() => { setDetailData({ type: "game", name: game }); setView("game-detail"); }}
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #222", cursor: "pointer" }}>
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2", cursor: "pointer" }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#ccc" }}>{game}</div>
-                      <div style={{ fontSize: 11, color: "#555" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{game}</div>
+                      <div style={{ fontSize: 11, color: "#bbb" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs</div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
+                    <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
                       {d.profit >= 0 ? "+" : "-"}{formatCurrencyFull(d.profit)}
                     </div>
                   </div>
@@ -586,12 +586,12 @@ export default function BankrollTracker({ session, onLoans }) {
                 <div style={{ ...statLabel, marginBottom: 10 }}>By Location</div>
                 {Object.entries(byLocation).sort((a, b) => b[1].profit - a[1].profit).slice(0, 5).map(([loc, d]) => (
                   <div key={loc} onClick={() => { setDetailData({ type: "location", name: loc }); setView("location-detail"); }}
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #222", cursor: "pointer" }}>
+                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2", cursor: "pointer" }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#ccc" }}>{loc}</div>
-                      <div style={{ fontSize: 11, color: "#555" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{loc}</div>
+                      <div style={{ fontSize: 11, color: "#bbb" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs</div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
+                    <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
                       {d.profit >= 0 ? "+" : "-"}{formatCurrencyFull(d.profit)}
                     </div>
                   </div>
@@ -602,15 +602,15 @@ export default function BankrollTracker({ session, onLoans }) {
               <div style={{ ...cardStyle, cursor: "default" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                   <div style={statLabel}>Recent Sessions</div>
-                  <button onClick={() => setView("sessions")} style={{ background: "none", border: "none", color: "#FFB800", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>View All →</button>
+                  <button onClick={() => setView("sessions")} style={{ background: "none", border: "none", color: "#b8860b", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>View All →</button>
                 </div>
                 {sessions.slice(0, 5).map((s) => (
-                  <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #222" }}>
+                  <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2" }}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "#ccc" }}>{s.game || "Unknown"}</div>
-                      <div style={{ fontSize: 11, color: "#555" }}>{formatDateShort(s.start_time)} • {s.location}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#333" }}>{s.game || "Unknown"}</div>
+                      <div style={{ fontSize: 11, color: "#bbb" }}>{formatDateShort(s.start_time)} • {s.location}</div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: Number(s.net_profit) >= 0 ? "#00E676" : "#FF5252" }}>
+                    <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: Number(s.net_profit) >= 0 ? "#00E676" : "#FF5252" }}>
                       {Number(s.net_profit) >= 0 ? "+" : "-"}{formatCurrencyFull(s.net_profit)}
                     </div>
                   </div>
@@ -621,15 +621,15 @@ export default function BankrollTracker({ session, onLoans }) {
               <div style={{ ...cardStyle, cursor: "default" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                   <div style={statLabel}>By Year</div>
-                  <button onClick={() => setView("profit")} style={{ background: "none", border: "none", color: "#FFB800", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>View All →</button>
+                  <button onClick={() => setView("profit")} style={{ background: "none", border: "none", color: "#b8860b", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>View All →</button>
                 </div>
                 {yearlyData.reverse().slice(0, 5).map(([year, d]) => (
-                  <div key={year} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #222" }}>
+                  <div key={year} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2" }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#ccc" }}>{year}</div>
-                      <div style={{ fontSize: 11, color: "#555" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{year}</div>
+                      <div style={{ fontSize: 11, color: "#bbb" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs</div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
+                    <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
                       {d.profit >= 0 ? "+" : "-"}{formatCurrencyFull(d.profit)}
                     </div>
                   </div>
@@ -643,24 +643,24 @@ export default function BankrollTracker({ session, onLoans }) {
       {/* ==================== HOURS DRILL-DOWN ==================== */}
       {view === "hours" && (
         <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
-          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
+          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
 
           <div style={{ ...cardStyle, cursor: "default" }}>
             <div style={statLabel}>Total Hours</div>
-            <div style={{ ...statValue, color: "#FFB800" }}>{formatHoursFull(totalMinutes)}</div>
-            <div style={{ fontSize: 12, color: "#555", marginTop: 4 }}>Avg {(totalHours / Math.max(sessions.length, 1)).toFixed(1)}hrs per session</div>
+            <div style={{ ...statValue, color: "#b8860b" }}>{formatHoursFull(totalMinutes)}</div>
+            <div style={{ fontSize: 12, color: "#bbb", marginTop: 4 }}>Avg {(totalHours / Math.max(sessions.length, 1)).toFixed(1)}hrs per session</div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div style={{ ...cardStyle, cursor: "default" }}>
               <div style={statLabel}>This Month</div>
-              <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#FFB800", marginTop: 4 }}>{formatHoursFull(monthMinutes)}hrs</div>
-              <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{monthSessions.length} sessions</div>
+              <div style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#b8860b", marginTop: 4 }}>{formatHoursFull(monthMinutes)}hrs</div>
+              <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>{monthSessions.length} sessions</div>
             </div>
             <div style={{ ...cardStyle, cursor: "default" }}>
               <div style={statLabel}>This Year</div>
-              <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#FFB800", marginTop: 4 }}>{formatHoursFull(yearMinutes)}hrs</div>
-              <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{yearSessions.length} sessions</div>
+              <div style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#b8860b", marginTop: 4 }}>{formatHoursFull(yearMinutes)}hrs</div>
+              <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>{yearSessions.length} sessions</div>
             </div>
           </div>
 
@@ -671,11 +671,11 @@ export default function BankrollTracker({ session, onLoans }) {
               return (
                 <div key={game} style={{ marginBottom: 10 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, color: "#ccc" }}>{game}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#FFB800" }}>{formatHoursFull(d.minutes)}hrs</span>
+                    <span style={{ fontSize: 13, color: "#333" }}>{game}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#b8860b" }}>{formatHoursFull(d.minutes)}hrs</span>
                   </div>
-                  <div style={{ background: "#222", borderRadius: 4, height: 6, overflow: "hidden" }}>
-                    <div style={{ background: "#FFB800", height: "100%", width: `${pct}%`, borderRadius: 4 }} />
+                  <div style={{ background: "#f0eee9", borderRadius: 4, height: 6, overflow: "hidden" }}>
+                    <div style={{ background: "#2e7d32", height: "100%", width: `${pct}%`, borderRadius: 4 }} />
                   </div>
                 </div>
               );
@@ -689,11 +689,11 @@ export default function BankrollTracker({ session, onLoans }) {
               return (
                 <div key={loc} style={{ marginBottom: 10 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13, color: "#ccc" }}>{loc}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#FFB800" }}>{formatHoursFull(d.minutes)}hrs</span>
+                    <span style={{ fontSize: 13, color: "#333" }}>{loc}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#b8860b" }}>{formatHoursFull(d.minutes)}hrs</span>
                   </div>
-                  <div style={{ background: "#222", borderRadius: 4, height: 6, overflow: "hidden" }}>
-                    <div style={{ background: "#FFB800", height: "100%", width: `${pct}%`, borderRadius: 4 }} />
+                  <div style={{ background: "#f0eee9", borderRadius: 4, height: 6, overflow: "hidden" }}>
+                    <div style={{ background: "#2e7d32", height: "100%", width: `${pct}%`, borderRadius: 4 }} />
                   </div>
                 </div>
               );
@@ -705,16 +705,16 @@ export default function BankrollTracker({ session, onLoans }) {
       {/* ==================== PROFIT DRILL-DOWN ==================== */}
       {view === "profit" && (
         <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
-          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
+          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div style={{ ...cardStyle, cursor: "default" }}>
               <div style={statLabel}>Lifetime</div>
-              <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: totalProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>{formatCurrencyFull(totalProfit)}</div>
+              <div style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: totalProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>{formatCurrencyFull(totalProfit)}</div>
             </div>
             <div style={{ ...cardStyle, cursor: "default" }}>
               <div style={statLabel}>Hourly Rate</div>
-              <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: hourlyRate >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>{formatCurrencyFull(hourlyRate)}/hr</div>
+              <div style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: hourlyRate >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>{formatCurrencyFull(hourlyRate)}/hr</div>
             </div>
           </div>
 
@@ -729,12 +729,12 @@ export default function BankrollTracker({ session, onLoans }) {
               const hr = d.minutes > 0 ? d.profit / (d.minutes / 60) : 0;
               return (
                 <div key={game} onClick={() => { setDetailData({ type: "game", name: game }); setView("game-detail"); }}
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #222", cursor: "pointer" }}>
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #e8e6e2", cursor: "pointer" }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#ccc" }}>{game}</div>
-                    <div style={{ fontSize: 11, color: "#555" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs • {formatCurrencyFull(hr)}/hr</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{game}</div>
+                    <div style={{ fontSize: 11, color: "#bbb" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs • {formatCurrencyFull(hr)}/hr</div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
+                  <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
                     {d.profit >= 0 ? "+" : ""}{formatCurrencyFull(d.profit)}
                   </div>
                 </div>
@@ -748,12 +748,12 @@ export default function BankrollTracker({ session, onLoans }) {
               const hr = d.minutes > 0 ? d.profit / (d.minutes / 60) : 0;
               return (
                 <div key={loc} onClick={() => { setDetailData({ type: "location", name: loc }); setView("location-detail"); }}
-                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #222", cursor: "pointer" }}>
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #e8e6e2", cursor: "pointer" }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#ccc" }}>{loc}</div>
-                    <div style={{ fontSize: 11, color: "#555" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs • {formatCurrencyFull(hr)}/hr</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{loc}</div>
+                    <div style={{ fontSize: 11, color: "#bbb" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs • {formatCurrencyFull(hr)}/hr</div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
+                  <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
                     {d.profit >= 0 ? "+" : ""}{formatCurrencyFull(d.profit)}
                   </div>
                 </div>
@@ -775,25 +775,25 @@ export default function BankrollTracker({ session, onLoans }) {
 
         return (
           <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
-            <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back</button>
-            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{detailData.name}</h2>
+            <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back</button>
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 500 }}>{detailData.name}</h2>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div style={{ ...cardStyle, cursor: "default" }}>
                 <div style={statLabel}>Profit</div>
-                <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: dProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>{formatCurrencyFull(dProfit)}</div>
+                <div style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: dProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>{formatCurrencyFull(dProfit)}</div>
               </div>
               <div style={{ ...cardStyle, cursor: "default" }}>
                 <div style={statLabel}>Hourly</div>
-                <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: dHourly >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>{formatCurrencyFull(dHourly)}/hr</div>
+                <div style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: dHourly >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>{formatCurrencyFull(dHourly)}/hr</div>
               </div>
               <div style={{ ...cardStyle, cursor: "default" }}>
                 <div style={statLabel}>Sessions</div>
-                <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#82B1FF", marginTop: 4 }}>{detailSessions.length}</div>
+                <div style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#1565c0", marginTop: 4 }}>{detailSessions.length}</div>
               </div>
               <div style={{ ...cardStyle, cursor: "default" }}>
                 <div style={statLabel}>Win Rate</div>
-                <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#82B1FF", marginTop: 4 }}>{detailSessions.length > 0 ? (dWin / detailSessions.length * 100).toFixed(1) : 0}%</div>
+                <div style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#1565c0", marginTop: 4 }}>{detailSessions.length > 0 ? (dWin / detailSessions.length * 100).toFixed(1) : 0}%</div>
               </div>
             </div>
 
@@ -805,17 +805,17 @@ export default function BankrollTracker({ session, onLoans }) {
             <div style={{ ...cardStyle, cursor: "default" }}>
               <div style={{ ...statLabel, marginBottom: 10 }}>Sessions</div>
               {detailSessions.slice(0, 20).map((s) => (
-                <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #222" }}>
+                <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2" }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#ccc" }}>{isGame ? s.location : s.game}</div>
-                    <div style={{ fontSize: 11, color: "#555" }}>{formatDateShort(s.start_time)} • {formatHoursFull(s.playing_minutes)}hrs</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#333" }}>{isGame ? s.location : s.game}</div>
+                    <div style={{ fontSize: 11, color: "#bbb" }}>{formatDateShort(s.start_time)} • {formatHoursFull(s.playing_minutes)}hrs</div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: Number(s.net_profit) >= 0 ? "#00E676" : "#FF5252" }}>
+                  <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: Number(s.net_profit) >= 0 ? "#00E676" : "#FF5252" }}>
                     {Number(s.net_profit) >= 0 ? "+" : ""}{formatCurrencyFull(s.net_profit)}
                   </div>
                 </div>
               ))}
-              {detailSessions.length > 20 && <div style={{ fontSize: 12, color: "#555", textAlign: "center", padding: 10 }}>Showing 20 of {detailSessions.length}</div>}
+              {detailSessions.length > 20 && <div style={{ fontSize: 12, color: "#bbb", textAlign: "center", padding: 10 }}>Showing 20 of {detailSessions.length}</div>}
             </div>
           </div>
         );
@@ -824,7 +824,7 @@ export default function BankrollTracker({ session, onLoans }) {
       {/* ==================== ALL SESSIONS ==================== */}
       {view === "sessions" && (
         <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
+          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
 
           {/* Filters */}
           <div style={{ display: "flex", gap: 8 }}>
@@ -842,31 +842,31 @@ export default function BankrollTracker({ session, onLoans }) {
             </select>
           </div>
 
-          <div style={{ fontSize: 12, color: "#666" }}>{filtered.length} sessions</div>
+          <div style={{ fontSize: 12, color: "#aaa" }}>{filtered.length} sessions</div>
 
           {filtered.slice(0, 50).map((s) => (
-            <div key={s.id} onClick={() => setDeleteConfirm(s)} style={{ background: "#1a1a1a", borderRadius: 10, padding: "12px 16px", border: "1px solid #222", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+            <div key={s.id} onClick={() => setDeleteConfirm(s)} style={{ background: "#fff", borderRadius: 14, padding: "14px 16px", border: "1px solid #e8e6e2", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#ccc" }}>{s.game || "Unknown"}</div>
-                <div style={{ fontSize: 11, color: "#555" }}>{formatDate(s.start_time)} • {s.location} • {formatHoursFull(s.playing_minutes)}hrs</div>
-                {s.note && <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{s.note}</div>}
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{s.game || "Unknown"}</div>
+                <div style={{ fontSize: 11, color: "#bbb" }}>{formatDate(s.start_time)} • {s.location} • {formatHoursFull(s.playing_minutes)}hrs</div>
+                {s.note && <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>{s.note}</div>}
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: Number(s.net_profit) >= 0 ? "#00E676" : "#FF5252" }}>
+              <div style={{ fontSize: 16, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: Number(s.net_profit) >= 0 ? "#00E676" : "#FF5252" }}>
                 {Number(s.net_profit) >= 0 ? "+" : ""}{formatCurrencyFull(s.net_profit)}
               </div>
             </div>
           ))}
-          {filtered.length > 50 && <div style={{ fontSize: 12, color: "#555", textAlign: "center" }}>Showing 50 of {filtered.length}</div>}
+          {filtered.length > 50 && <div style={{ fontSize: 12, color: "#bbb", textAlign: "center" }}>Showing 50 of {filtered.length}</div>}
         </div>
       )}
 
       {/* ==================== ADD SESSION ==================== */}
       {view === "add" && (
         <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
-          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back</button>
+          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back</button>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Add Session</h2>
-            <button onClick={() => setShowManagePresets(true)} style={{ background: "none", border: "none", color: "#666", fontSize: 12, cursor: "pointer" }}>⚙ Edit Presets</button>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>Add Session</h2>
+            <button onClick={() => setShowManagePresets(true)} style={{ background: "none", border: "none", color: "#aaa", fontSize: 12, cursor: "pointer" }}>⚙ Edit Presets</button>
           </div>
 
           {/* Preset buttons */}
@@ -874,8 +874,8 @@ export default function BankrollTracker({ session, onLoans }) {
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {presets.map((preset, i) => (
                 <button key={i} onClick={() => applyPreset(preset)} style={{
-                  padding: "8px 14px", background: "#2a2a2a", border: "1px solid #444", borderRadius: 20,
-                  color: "#FFB800", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                  padding: "8px 14px", background: "#fff", border: "1px solid #e8e6e2", borderRadius: 20,
+                  color: "#2e7d32", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
                   whiteSpace: "nowrap", transition: "all 0.15s",
                 }}>
                   {preset.name}
@@ -892,8 +892,8 @@ export default function BankrollTracker({ session, onLoans }) {
               {newGame === "__custom__" ? (
                 <div style={{ display: "flex", gap: 6 }}>
                   <input type="text" placeholder="New game name..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                  <button onClick={() => { if (customGameInput.trim()) { setNewGame(customGameInput.trim()); } else { setNewGame("Dealers Choice"); } setCustomGameInput(""); }} style={{ background: "#43A047", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✓</button>
-                  <button onClick={() => { setNewGame("Dealers Choice"); setCustomGameInput(""); }} style={{ background: "#333", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✕</button>
+                  <button onClick={() => { if (customGameInput.trim()) { setNewGame(customGameInput.trim()); } else { setNewGame("Dealers Choice"); } setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <button onClick={() => { setNewGame("Dealers Choice"); setCustomGameInput(""); }} style={{ background: "#e8e6e2", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✕</button>
                 </div>
               ) : (
                 <select value={newGame} onChange={(e) => setNewGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -907,7 +907,7 @@ export default function BankrollTracker({ session, onLoans }) {
               {newVariant === "__custom__" ? (
                 <div style={{ display: "flex", gap: 4 }}>
                   <input type="text" placeholder="New..." autoFocus value={customVariantInput} onChange={(e) => setCustomVariantInput(e.target.value)} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                  <button onClick={() => { if (customVariantInput.trim()) { setNewVariant(customVariantInput.trim()); } else { setNewVariant("Cash Game"); } setCustomVariantInput(""); }} style={{ background: "#43A047", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <button onClick={() => { if (customVariantInput.trim()) { setNewVariant(customVariantInput.trim()); } else { setNewVariant("Cash Game"); } setCustomVariantInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                 </div>
               ) : (
                 <select value={newVariant} onChange={(e) => setNewVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -923,8 +923,8 @@ export default function BankrollTracker({ session, onLoans }) {
             {newLocation === "__custom__" ? (
               <div style={{ display: "flex", gap: 6 }}>
                 <input type="text" placeholder="New location name..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                <button onClick={() => { if (customLocationInput.trim()) { setNewLocation(customLocationInput.trim()); } else { setNewLocation(""); } setCustomLocationInput(""); }} style={{ background: "#43A047", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✓</button>
-                <button onClick={() => { setNewLocation(""); setCustomLocationInput(""); }} style={{ background: "#333", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✕</button>
+                <button onClick={() => { if (customLocationInput.trim()) { setNewLocation(customLocationInput.trim()); } else { setNewLocation(""); } setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                <button onClick={() => { setNewLocation(""); setCustomLocationInput(""); }} style={{ background: "#e8e6e2", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✕</button>
               </div>
             ) : (
               <select value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -941,7 +941,7 @@ export default function BankrollTracker({ session, onLoans }) {
               {newSessionType === "__custom__" ? (
                 <div style={{ display: "flex", gap: 4 }}>
                   <input type="text" placeholder="New type..." autoFocus value={customTypeInput} onChange={(e) => setCustomTypeInput(e.target.value)} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                  <button onClick={() => { if (customTypeInput.trim()) { setNewSessionType(customTypeInput.trim()); } else { setNewSessionType("Casino"); } setCustomTypeInput(""); }} style={{ background: "#43A047", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <button onClick={() => { if (customTypeInput.trim()) { setNewSessionType(customTypeInput.trim()); } else { setNewSessionType("Casino"); } setCustomTypeInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                 </div>
               ) : (
                 <select value={newSessionType} onChange={(e) => setNewSessionType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -958,8 +958,8 @@ export default function BankrollTracker({ session, onLoans }) {
 
           {/* Profit entry toggle */}
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-            <button onClick={() => setProfitMode("net")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: profitMode === "net" ? "#FFB800" : "#2a2a2a", color: profitMode === "net" ? "#000" : "#888", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Enter Net Profit</button>
-            <button onClick={() => setProfitMode("buyin")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: profitMode === "buyin" ? "#FFB800" : "#2a2a2a", color: profitMode === "buyin" ? "#000" : "#888", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Buy-in / Cash-out</button>
+            <button onClick={() => setProfitMode("net")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: profitMode === "net" ? "#FFB800" : "#2a2a2a", color: profitMode === "net" ? "#000" : "#888", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>Enter Net Profit</button>
+            <button onClick={() => setProfitMode("buyin")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: profitMode === "buyin" ? "#FFB800" : "#2a2a2a", color: profitMode === "buyin" ? "#000" : "#888", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>Buy-in / Cash-out</button>
           </div>
 
           {profitMode === "net" ? (
@@ -978,20 +978,20 @@ export default function BankrollTracker({ session, onLoans }) {
 
           <div><label style={labelStyle}>Note — optional</label><input type="text" placeholder="Session notes..." value={newNote} onChange={(e) => setNewNote(e.target.value)} style={inputStyle} /></div>
 
-          <button onClick={handleAddSession} style={{ padding: "14px", background: "#43A047", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>+ Add Session</button>
+          <button onClick={handleAddSession} style={{ padding: "14px", background: "#2e7d32", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", marginTop: 4 }}>+ Add Session</button>
         </div>
       )}
 
       {/* ==================== IMPORT ==================== */}
       {view === "import" && (
         <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
-          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back</button>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Import Data</h2>
-          <div style={{ color: "#888", fontSize: 14 }}>Upload your cleaned Poker Bankroll Tracker CSV export. This will add all sessions to your account.</div>
+          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back</button>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>Import Data</h2>
+          <div style={{ color: "#999", fontSize: 14 }}>Upload your cleaned Poker Bankroll Tracker CSV export. This will add all sessions to your account.</div>
 
           <input type="file" accept=".csv" ref={fileInputRef} onChange={handleImport} style={{ display: "none" }} />
           <button onClick={() => fileInputRef.current?.click()} disabled={importing}
-            style={{ padding: "16px", background: importing ? "#333" : "#FFB800", border: "none", borderRadius: 12, color: "#000", fontSize: 16, fontWeight: 700, cursor: importing ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+            style={{ padding: "16px", background: importing ? "#333" : "#FFB800", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 500, cursor: importing ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif" }}>
             {importing ? "Importing..." : "📤 Select CSV File"}
           </button>
 
@@ -1001,7 +1001,7 @@ export default function BankrollTracker({ session, onLoans }) {
             </div>
           )}
 
-          <div style={{ color: "#555", fontSize: 12 }}>
+          <div style={{ color: "#bbb", fontSize: 12 }}>
             Supported format: Poker Bankroll Tracker (PBT) CSV export. Make sure to use the cleaned version with corrected game names and locations.
           </div>
         </div>
@@ -1011,16 +1011,16 @@ export default function BankrollTracker({ session, onLoans }) {
       <Modal isOpen={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Session Details">
         {deleteConfirm && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ background: "#222", borderRadius: 12, padding: 16, textAlign: "center" }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#ccc" }}>{deleteConfirm.game}</div>
-              <div style={{ fontSize: 28, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: Number(deleteConfirm.net_profit) >= 0 ? "#00E676" : "#FF5252", marginTop: 6 }}>
+            <div style={{ background: "#f0eee9", borderRadius: 12, padding: 16, textAlign: "center" }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{deleteConfirm.game}</div>
+              <div style={{ fontSize: 28, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: Number(deleteConfirm.net_profit) >= 0 ? "#00E676" : "#FF5252", marginTop: 6 }}>
                 {Number(deleteConfirm.net_profit) >= 0 ? "+" : ""}{formatCurrencyFull(deleteConfirm.net_profit)}
               </div>
-              <div style={{ fontSize: 12, color: "#666", marginTop: 6 }}>{formatDate(deleteConfirm.start_time)} • {deleteConfirm.location} • {formatHoursFull(deleteConfirm.playing_minutes)}hrs</div>
-              {Number(deleteConfirm.buyin) > 0 && <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>Buy-in: {formatCurrencyFull(deleteConfirm.buyin)} • Cash-out: {formatCurrencyFull(deleteConfirm.cashout)}</div>}
-              {deleteConfirm.note && <div style={{ fontSize: 12, color: "#888", marginTop: 6 }}>{deleteConfirm.note}</div>}
+              <div style={{ fontSize: 12, color: "#aaa", marginTop: 6 }}>{formatDate(deleteConfirm.start_time)} • {deleteConfirm.location} • {formatHoursFull(deleteConfirm.playing_minutes)}hrs</div>
+              {Number(deleteConfirm.buyin) > 0 && <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Buy-in: {formatCurrencyFull(deleteConfirm.buyin)} • Cash-out: {formatCurrencyFull(deleteConfirm.cashout)}</div>}
+              {deleteConfirm.note && <div style={{ fontSize: 12, color: "#999", marginTop: 6 }}>{deleteConfirm.note}</div>}
             </div>
-            <button onClick={() => handleDelete(deleteConfirm.id)} style={{ padding: "12px", background: "#e53935", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Delete Session</button>
+            <button onClick={() => handleDelete(deleteConfirm.id)} style={{ padding: "12px", background: "#c62828", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Delete Session</button>
           </div>
         )}
       </Modal>
@@ -1028,7 +1028,7 @@ export default function BankrollTracker({ session, onLoans }) {
       {/* ==================== MANAGE PRESETS MODAL ==================== */}
       <Modal isOpen={showManagePresets} onClose={() => { setShowManagePresets(false); setEditingPreset(null); }} title="Session Presets">
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ fontSize: 13, color: "#888" }}>Quick-fill buttons for the Add Session form. Tap a preset to edit it.</div>
+          <div style={{ fontSize: 13, color: "#999" }}>Quick-fill buttons for the Add Session form. Tap a preset to edit it.</div>
 
           {presets.map((preset, i) => (
             <div key={i} style={{ background: editingPreset === i ? "#2a2a1a" : "#222", borderRadius: 10, padding: "12px 14px", border: editingPreset === i ? "1px solid #FFB800" : "1px solid #333" }}>
@@ -1066,17 +1066,17 @@ export default function BankrollTracker({ session, onLoans }) {
                     <div style={{ flex: 1 }}><label style={labelStyle}>Big Blind</label><input type="number" value={presetBigBlind} onChange={(e) => setPresetBigBlind(e.target.value)} style={inputStyle} placeholder="0" /></div>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={saveEditedPreset} style={{ flex: 1, padding: "10px", background: "#43A047", border: "none", borderRadius: 8, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Save</button>
-                    <button onClick={() => setEditingPreset(null)} style={{ flex: 1, padding: "10px", background: "#333", border: "none", borderRadius: 8, color: "#999", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Cancel</button>
+                    <button onClick={saveEditedPreset} style={{ flex: 1, padding: "10px", background: "#2e7d32", border: "none", borderRadius: 8, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>Save</button>
+                    <button onClick={() => setEditingPreset(null)} style={{ flex: 1, padding: "10px", background: "#e8e6e2", border: "none", borderRadius: 8, color: "#999", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>Cancel</button>
                   </div>
                 </div>
               ) : (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div onClick={() => startEditPreset(preset, i)} style={{ cursor: "pointer", flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#FFB800" }}>{preset.name}</div>
-                    <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{preset.game} • {preset.location} • {preset.smallBlind}/{preset.bigBlind}</div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "#b8860b" }}>{preset.name}</div>
+                    <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>{preset.game} • {preset.location} • {preset.smallBlind}/{preset.bigBlind}</div>
                   </div>
-                  <button onClick={() => deletePreset(i)} style={{ background: "none", border: "none", color: "#555", fontSize: 16, cursor: "pointer", padding: "4px 8px" }}>×</button>
+                  <button onClick={() => deletePreset(i)} style={{ background: "none", border: "none", color: "#bbb", fontSize: 16, cursor: "pointer", padding: "4px 8px" }}>×</button>
                 </div>
               )}
             </div>
@@ -1084,7 +1084,7 @@ export default function BankrollTracker({ session, onLoans }) {
 
           {/* Add new preset */}
           {editingPreset === "new" ? (
-            <div style={{ background: "#2a2a1a", borderRadius: 10, padding: "12px 14px", border: "1px solid #FFB800", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ background: "#fffbf0", borderRadius: 10, padding: "12px 14px", border: "1px solid #2e7d32", display: "flex", flexDirection: "column", gap: 10 }}>
               <div><label style={labelStyle}>Preset Name</label><input type="text" value={presetName} onChange={(e) => setPresetName(e.target.value)} style={inputStyle} placeholder="e.g. Sortis Omaha" autoFocus /></div>
               <div style={{ display: "flex", gap: 6 }}>
                 <div style={{ flex: 1 }}><label style={labelStyle}>Game</label>
@@ -1117,13 +1117,13 @@ export default function BankrollTracker({ session, onLoans }) {
                 <div style={{ flex: 1 }}><label style={labelStyle}>Big Blind</label><input type="number" value={presetBigBlind} onChange={(e) => setPresetBigBlind(e.target.value)} style={inputStyle} placeholder="0" /></div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={() => { saveEditedPreset(); }} style={{ flex: 1, padding: "10px", background: "#43A047", border: "none", borderRadius: 8, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Add Preset</button>
-                <button onClick={() => { setEditingPreset(null); setPresetName(""); }} style={{ flex: 1, padding: "10px", background: "#333", border: "none", borderRadius: 8, color: "#999", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Cancel</button>
+                <button onClick={() => { saveEditedPreset(); }} style={{ flex: 1, padding: "10px", background: "#2e7d32", border: "none", borderRadius: 8, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>Add Preset</button>
+                <button onClick={() => { setEditingPreset(null); setPresetName(""); }} style={{ flex: 1, padding: "10px", background: "#e8e6e2", border: "none", borderRadius: 8, color: "#999", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>Cancel</button>
               </div>
             </div>
           ) : (
             <button onClick={() => { setEditingPreset("new"); setPresetName(""); setPresetGame(""); setPresetVariant("Cash Game"); setPresetLocation(""); setPresetType("Casino"); setPresetSmallBlind(""); setPresetBigBlind(""); }}
-              style={{ padding: "12px", background: "#2a2a2a", border: "1px dashed #444", borderRadius: 10, color: "#888", fontWeight: 600, cursor: "pointer", fontSize: 13 }}>+ Add New Preset</button>
+              style={{ padding: "12px", background: "#f0eee9", border: "1px dashed #ccc", borderRadius: 10, color: "#999", fontWeight: 600, cursor: "pointer", fontSize: 13 }}>+ Add New Preset</button>
           )}
         </div>
       </Modal>
@@ -1131,7 +1131,7 @@ export default function BankrollTracker({ session, onLoans }) {
       {/* FAB for adding session */}
       {view === "dashboard" && sessions.length > 0 && (
         <button onClick={() => setView("add")}
-          style={{ position: "fixed", bottom: 24, right: "calc(50% - 210px)", width: 56, height: 56, borderRadius: "50%", background: "#FFB800", border: "none", color: "#000", fontSize: 28, fontWeight: 300, cursor: "pointer", boxShadow: "0 4px 20px rgba(255,184,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>+</button>
+          style={{ position: "fixed", bottom: 24, right: "calc(50% - 210px)", width: 56, height: 56, borderRadius: "50%", background: "#2e7d32", border: "none", color: "#fff", fontSize: 28, fontWeight: 300, cursor: "pointer", boxShadow: "0 4px 20px rgba(46,125,50,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>+</button>
       )}
     </div>
   );
