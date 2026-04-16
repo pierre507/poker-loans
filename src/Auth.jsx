@@ -4,10 +4,10 @@ import { supabase } from "./supabaseClient";
 const inputStyle = {
   width: "100%",
   padding: "14px 16px",
-  background: "#2a2a2a",
-  border: "1px solid #444",
+  background: "#fff",
+  border: "1px solid #e8e6e2",
   borderRadius: 12,
-  color: "#fff",
+  color: "#1a1a1a",
   fontSize: 16,
   fontFamily: "'DM Sans', sans-serif",
   outline: "none",
@@ -29,172 +29,91 @@ export default function Auth() {
     setMessage("");
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) {
-        setError(error.message);
-      } else {
-        setMessage("Check your email for a confirmation link!");
-      }
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) { setError(error.message); }
+      else { setMessage("Check your email for a confirmation link!"); }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        setError(error.message);
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) { setError(error.message); }
     }
     setLoading(false);
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
-      setError("Enter your email first");
-      return;
-    }
+    if (!email) { setError("Enter your email first"); return; }
     setLoading(true);
     setError("");
     const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) {
-      setError(error.message);
-    } else {
-      setMessage("Password reset email sent!");
-    }
+    if (error) { setError(error.message); }
+    else { setMessage("Password reset email sent!"); }
     setLoading(false);
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#111",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "'DM Sans', sans-serif",
-        padding: 20,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 400,
-          background: "#1a1a1a",
-          borderRadius: 20,
-          padding: 32,
-          border: "1px solid #333",
-        }}
-      >
-        {/* Logo */}
+    <div style={{
+      minHeight: "100vh", background: "#f8f7f5",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "'DM Sans', sans-serif", padding: 20,
+    }}>
+      <div style={{
+        width: "100%", maxWidth: 400, background: "#fff",
+        borderRadius: 20, padding: 32, border: "1px solid #e8e6e2",
+      }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 32,
-              fontWeight: 900,
-              fontFamily: "'Space Mono', monospace",
-              color: "#fff",
-            }}
-          >
-            POKER<span style={{ color: "#e53935" }}>LOANS</span>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 500, color: "#1a1a1a" }}>
+            poker <span style={{ color: "#2e7d32" }}>manager</span>
           </h1>
-          <p style={{ color: "#666", fontSize: 14, marginTop: 8 }}>
-            Track loans & debts with friends
+          <p style={{ color: "#aaa", fontSize: 14, marginTop: 8 }}>
+            Track your bankroll, loans & debts
           </p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
-            <label style={{ display: "block", marginBottom: 6, fontSize: 13, color: "#999", fontWeight: 600 }}>
-              Email
-            </label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={inputStyle}
-              required
-            />
+            <label style={{ display: "block", marginBottom: 6, fontSize: 13, color: "#888", fontWeight: 500 }}>Email</label>
+            <input type="email" placeholder="you@example.com" value={email}
+              onChange={(e) => setEmail(e.target.value)} style={inputStyle} required />
           </div>
-
           <div>
-            <label style={{ display: "block", marginBottom: 6, fontSize: 13, color: "#999", fontWeight: 600 }}>
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={inputStyle}
-              required
-              minLength={6}
-            />
+            <label style={{ display: "block", marginBottom: 6, fontSize: 13, color: "#888", fontWeight: 500 }}>Password</label>
+            <input type="password" placeholder="••••••••" value={password}
+              onChange={(e) => setPassword(e.target.value)} style={inputStyle} required minLength={6} />
           </div>
 
           {error && (
-            <div style={{
-              background: "rgba(229,57,53,0.15)", border: "1px solid rgba(229,57,53,0.3)",
-              borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#e53935",
-            }}>
+            <div style={{ background: "#fce8e8", border: "1px solid #f5c6c6", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#c62828" }}>
               {error}
             </div>
           )}
-
           {message && (
-            <div style={{
-              background: "rgba(67,160,71,0.15)", border: "1px solid rgba(67,160,71,0.3)",
-              borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#43A047",
-            }}>
+            <div style={{ background: "#e8f5e9", border: "1px solid #c8e6c9", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#2e7d32" }}>
               {message}
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: "14px",
-              background: loading ? "#555" : "linear-gradient(135deg, #e53935, #43A047)",
-              border: "none",
-              borderRadius: 12,
-              color: "#fff",
-              fontSize: 16,
-              fontWeight: 700,
-              cursor: loading ? "not-allowed" : "pointer",
-              fontFamily: "'DM Sans', sans-serif",
-              marginTop: 4,
-            }}
-          >
+          <button type="submit" disabled={loading} style={{
+            padding: "14px", background: loading ? "#e8e6e2" : "#2e7d32",
+            border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 500,
+            cursor: loading ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", marginTop: 4,
+          }}>
             {loading ? "..." : isSignUp ? "Create Account" : "Sign In"}
           </button>
 
           {!isSignUp && (
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              style={{
-                background: "none", border: "none", color: "#666",
-                fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-              }}
-            >
+            <button type="button" onClick={handleForgotPassword} style={{
+              background: "none", border: "none", color: "#aaa", fontSize: 13,
+              cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+            }}>
               Forgot password?
             </button>
           )}
         </form>
 
         <div style={{ textAlign: "center", marginTop: 24 }}>
-          <button
-            onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); }}
-            style={{
-              background: "none", border: "none", color: "#999",
-              fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
+          <button onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); }} style={{
+            background: "none", border: "none", color: "#888", fontSize: 14,
+            cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+          }}>
             {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
           </button>
         </div>
