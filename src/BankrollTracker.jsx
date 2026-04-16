@@ -137,13 +137,24 @@ export default function BankrollTracker({ session, onBack }) {
   // ==================== DATA LOADING ====================
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("bankroll_sessions")
-      .select("*")
-      .eq("user_id", userId)
-      .order("start_time", { ascending: false });
-    if (data) setSessions(data);
-    if (error) console.error(error);
+    // Supabase returns max 1000 rows by default, so we paginate
+    let allData = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("bankroll_sessions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("start_time", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error) { console.error(error); break; }
+      if (data) allData = [...allData, ...data];
+      hasMore = data && data.length === pageSize;
+      from += pageSize;
+    }
+    setSessions(allData);
     setLoading(false);
   }, [userId]);
 
