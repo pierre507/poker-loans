@@ -8,7 +8,7 @@ import BankrollTracker from './BankrollTracker'
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState("loans") // "loans" or "bankroll"
+  const [currentPage, setCurrentPage] = useState("bankroll") // "bankroll" or "loans"
 
   useEffect(() => {
     // Load font
@@ -48,11 +48,11 @@ function App() {
 
   if (!session) return <Auth />
 
-  if (currentPage === "bankroll") {
-    return <BankrollTracker session={session} onBack={() => setCurrentPage("loans")} />
+  if (currentPage === "loans") {
+    return <PokerLoans session={session} onBack={() => setCurrentPage("bankroll")} />
   }
 
-  return <PokerLoans session={session} onBankroll={() => setCurrentPage("bankroll")} />
+  return <BankrollTracker session={session} onLoans={() => setCurrentPage("loans")} />
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
