@@ -129,6 +129,12 @@ export default function BankrollTracker({ session, onBack }) {
   const [importStatus, setImportStatus] = useState("");
   const fileInputRef = useRef(null);
 
+  // Custom input states for "Add new" dropdowns
+  const [customGameInput, setCustomGameInput] = useState("");
+  const [customLocationInput, setCustomLocationInput] = useState("");
+  const [customVariantInput, setCustomVariantInput] = useState("");
+  const [customTypeInput, setCustomTypeInput] = useState("");
+
   // Filters
   const [filterGame, setFilterGame] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
@@ -190,6 +196,8 @@ export default function BankrollTracker({ session, onBack }) {
   // Unique values for filters/forms
   const allGames = [...new Set(sessions.map(s => s.game).filter(Boolean))].sort();
   const allLocations = [...new Set(sessions.map(s => s.location).filter(Boolean))].sort();
+  const allVariants = [...new Set(sessions.map(s => s.variant).filter(Boolean))].sort();
+  const allTypes = [...new Set(sessions.map(s => s.session_type).filter(Boolean))].sort();
   const allYears = [...new Set(sessions.map(s => s.start_time?.slice(0, 4)).filter(Boolean))].sort().reverse();
 
   // Group by game
@@ -763,33 +771,66 @@ export default function BankrollTracker({ session, onBack }) {
           <div style={{ display: "flex", gap: 8 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Game</label>
-              <input type="text" list="game-list" value={newGame} onChange={(e) => setNewGame(e.target.value)} style={inputStyle} placeholder="e.g. Dealers Choice" />
-              <datalist id="game-list">{allGames.map(g => <option key={g} value={g} />)}</datalist>
+              {newGame === "__custom__" ? (
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input type="text" placeholder="New game name..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                  <button onClick={() => { if (customGameInput.trim()) { setNewGame(customGameInput.trim()); } else { setNewGame("Dealers Choice"); } setCustomGameInput(""); }} style={{ background: "#43A047", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <button onClick={() => { setNewGame("Dealers Choice"); setCustomGameInput(""); }} style={{ background: "#333", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✕</button>
+                </div>
+              ) : (
+                <select value={newGame} onChange={(e) => setNewGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                  {allGames.map(g => <option key={g} value={g}>{g}</option>)}
+                  <option value="__custom__">+ Add new game...</option>
+                </select>
+              )}
             </div>
             <div style={{ width: 120 }}>
               <label style={labelStyle}>Variant</label>
-              <select value={newVariant} onChange={(e) => setNewVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                <option value="Cash Game">Cash Game</option>
-                <option value="Tournament">Tournament</option>
-              </select>
+              {newVariant === "__custom__" ? (
+                <div style={{ display: "flex", gap: 4 }}>
+                  <input type="text" placeholder="New..." autoFocus value={customVariantInput} onChange={(e) => setCustomVariantInput(e.target.value)} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                  <button onClick={() => { if (customVariantInput.trim()) { setNewVariant(customVariantInput.trim()); } else { setNewVariant("Cash Game"); } setCustomVariantInput(""); }} style={{ background: "#43A047", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✓</button>
+                </div>
+              ) : (
+                <select value={newVariant} onChange={(e) => setNewVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                  {allVariants.map(v => <option key={v} value={v}>{v}</option>)}
+                  <option value="__custom__">+ Add new...</option>
+                </select>
+              )}
             </div>
           </div>
 
           <div>
             <label style={labelStyle}>Location</label>
-            <input type="text" list="loc-list" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={inputStyle} placeholder="e.g. Sortis" />
-            <datalist id="loc-list">{allLocations.map(l => <option key={l} value={l} />)}</datalist>
+            {newLocation === "__custom__" ? (
+              <div style={{ display: "flex", gap: 6 }}>
+                <input type="text" placeholder="New location name..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                <button onClick={() => { if (customLocationInput.trim()) { setNewLocation(customLocationInput.trim()); } else { setNewLocation(""); } setCustomLocationInput(""); }} style={{ background: "#43A047", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✓</button>
+                <button onClick={() => { setNewLocation(""); setCustomLocationInput(""); }} style={{ background: "#333", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✕</button>
+              </div>
+            ) : (
+              <select value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <option value="">Select location...</option>
+                {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                <option value="__custom__">+ Add new location...</option>
+              </select>
+            )}
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Type</label>
-              <select value={newSessionType} onChange={(e) => setNewSessionType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                <option value="Casino">Casino</option>
-                <option value="Home Game">Home Game</option>
-                <option value="Club">Club</option>
-                <option value="Online">Online</option>
-              </select>
+              {newSessionType === "__custom__" ? (
+                <div style={{ display: "flex", gap: 4 }}>
+                  <input type="text" placeholder="New type..." autoFocus value={customTypeInput} onChange={(e) => setCustomTypeInput(e.target.value)} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                  <button onClick={() => { if (customTypeInput.trim()) { setNewSessionType(customTypeInput.trim()); } else { setNewSessionType("Casino"); } setCustomTypeInput(""); }} style={{ background: "#43A047", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>✓</button>
+                </div>
+              ) : (
+                <select value={newSessionType} onChange={(e) => setNewSessionType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                  {allTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  <option value="__custom__">+ Add new...</option>
+                </select>
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Hours Played</label>
