@@ -102,7 +102,7 @@ const CumulativeLine = ({ data, height = 140, color = "#00E676" }) => {
 };
 
 // ==================== MAIN COMPONENT ====================
-export default function BankrollTracker({ session, onBack }) {
+export default function BankrollTracker({ session, onLoans }) {
   const userId = session.user.id;
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -452,6 +452,8 @@ export default function BankrollTracker({ session, onBack }) {
     fetchData();
   };
 
+  const handleSignOut = async () => { await supabase.auth.signOut(); };
+
   // ==================== RENDER ====================
   if (loading) {
     return (
@@ -473,18 +475,17 @@ export default function BankrollTracker({ session, onBack }) {
 
       {/* ==================== TOP BAR ==================== */}
       <div style={{ background: "#1a1a1a", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #222" }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
-          ‹ Loans
-        </button>
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, fontFamily: "'Space Mono', monospace" }}>
-          BANK<span style={{ color: "#FFB800" }}>ROLL</span>
+          POKER<span style={{ color: "#FFB800" }}>MGR</span>
         </h1>
         <div style={{ display: "flex", gap: 8 }}>
+          {onLoans && <button onClick={onLoans} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Loans & Debts">💰</button>}
           {sessions.length === 0 ? (
             <button onClick={() => setView("import")} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Import</button>
           ) : (
             <button onClick={() => setView(view === "sessions" ? "dashboard" : "sessions")} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>📋</button>
           )}
+          <button onClick={handleSignOut} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Sign Out">🚪</button>
         </div>
       </div>
 
