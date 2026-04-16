@@ -159,7 +159,7 @@ const inputStyle = { width: "100%", padding: "12px 14px", background: "#2a2a2a",
 const labelStyle = { display: "block", marginBottom: 6, fontSize: 13, color: "#999", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" };
 
 // ==================== MAIN APP ====================
-export default function PokerLoans({ session }) {
+export default function PokerLoans({ session, onBankroll }) {
   const userId = session.user.id;
   const [people, setPeople] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -632,6 +632,7 @@ export default function PokerLoans({ session }) {
             POKER<span style={{ color: activeTab === "debts" ? "#e53935" : "#43A047" }}>LOANS</span>
           </h1>
           <div style={{ display: "flex", gap: 8 }}>
+            {onBankroll && <button onClick={onBankroll} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Bankroll Tracker">📊</button>}
             <button onClick={() => setShowCurrencyModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Currencies">💱</button>
             <button onClick={() => setShowRemindersModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Reminders">🔔</button>
             <button onClick={() => setShowPersonHistoryModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="History">📋</button>
