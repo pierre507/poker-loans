@@ -71,12 +71,12 @@ const calculateInterest = (principal, rate, startDate) => {
 
 const getDebtColor = (index, total) => {
   const t = total <= 1 ? 0.5 : index / (total - 1);
-  return `rgb(${Math.round(220 - t * 80)}, ${Math.round(30 + t * 20)}, ${Math.round(30 + t * 20)})`;
+  return `rgb(${Math.round(255 - t * 10)}, ${Math.round(245 - t * 15)}, ${Math.round(245 - t * 15)})`;
 };
 
 const getLoanColor = (index, total) => {
   const t = total <= 1 ? 0.5 : index / (total - 1);
-  return `rgb(${Math.round(20 + t * 30)}, ${Math.round(200 - t * 80)}, ${Math.round(60 + t * 20)})`;
+  return `rgb(${Math.round(240 - t * 10)}, ${Math.round(255 - t * 10)}, ${Math.round(242 - t * 10)})`;
 };
 
 // ==================== SWIPEABLE ROW ====================
@@ -113,13 +113,13 @@ const SwipeableRow = ({ children, onSwipeAction, personId, isDebt }) => {
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeActions(); setTimeout(() => onSwipeAction("collect"), 50); }}
-          style={{ flex: 1, background: "#00C853", border: "none", color: "#000", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "0 4px", touchAction: "manipulation" }}>
+          style={{ flex: 1, background: "#2e7d32", border: "none", color: "#fff", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "0 4px", touchAction: "manipulation" }}>
           {isDebt ? "Pay" : "Collect"}
         </button>
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeActions(); setTimeout(() => onSwipeAction("delete"), 50); }}
-          style={{ flex: 1, background: "#e53935", border: "none", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "0 4px", touchAction: "manipulation" }}>
+          style={{ flex: 1, background: "#c62828", border: "none", color: "#1a1a1a", fontWeight: 500, fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "0 4px", touchAction: "manipulation" }}>
           Delete
         </button>
       </div>
@@ -143,11 +143,11 @@ const SwipeableRow = ({ children, onSwipeAction, personId, isDebt }) => {
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
-    <div onClick={onClose} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(4px)" }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 16, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto", border: "1px solid #333" }}>
+    <div onClick={onClose} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(2px)" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "#f8f7f5", borderRadius: 16, padding: 24, width: "100%", maxWidth: 420, maxHeight: "85vh", overflowY: "auto", border: "1px solid #e8e6e2" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>{title}</h2>
-          <button onClick={onClose} style={{ background: "#333", border: "none", color: "#fff", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, color: "#1a1a1a", fontFamily: "'DM Sans', sans-serif" }}>{title}</h2>
+          <button onClick={onClose} style={{ background: "#e8e6e2", border: "none", color: "#1a1a1a", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
         </div>
         {children}
       </div>
@@ -155,7 +155,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   );
 };
 
-const inputStyle = { width: "100%", padding: "12px 14px", background: "#2a2a2a", border: "1px solid #444", borderRadius: 10, color: "#fff", fontSize: 15, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" };
+const inputStyle = { width: "100%", padding: "12px 14px", background: "#fff", border: "1px solid #e8e6e2", borderRadius: 10, color: "#1a1a1a", fontSize: 15, fontFamily: "'DM Sans', sans-serif", outline: "none", boxSizing: "border-box" };
 const labelStyle = { display: "block", marginBottom: 6, fontSize: 13, color: "#999", fontWeight: 600, fontFamily: "'DM Sans', sans-serif" };
 
 // ==================== MAIN APP ====================
@@ -590,7 +590,7 @@ export default function PokerLoans({ session, onBack }) {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: "#f8f7f5", display: "flex", alignItems: "center", justifyContent: "center", color: "#1a1a1a", fontFamily: "'DM Sans', sans-serif" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>🎰</div>
           <div>Loading...</div>
@@ -600,7 +600,7 @@ export default function PokerLoans({ session, onBack }) {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#111", color: "#fff", fontFamily: "'DM Sans', sans-serif", maxWidth: 480, margin: "0 auto", position: "relative", paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: "#f8f7f5", color: "#1a1a1a", fontFamily: "'DM Sans', sans-serif", maxWidth: 480, margin: "0 auto", position: "relative", paddingBottom: 80 }}>
 
       {/* ==================== NET POSITION BAR ==================== */}
       {Object.keys(netPositions).length > 0 && (() => {
@@ -609,14 +609,14 @@ export default function PokerLoans({ session, onBack }) {
         const isZero = Math.abs(netUsd) < 0.01;
         return (
           <div style={{
-            background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
+            background: "#fff",
             padding: "10px 20px",
             display: "flex", alignItems: "center", justifyContent: "center",
             gap: 12, borderBottom: "1px solid #2a2a4a",
           }}>
-            <span style={{ fontSize: 12, color: "#8888aa", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Net Position</span>
+            <span style={{ fontSize: 12, color: "#999", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Net Position</span>
             <span style={{
-              fontSize: 18, fontWeight: 800, fontFamily: "'Space Mono', monospace",
+              fontSize: 18, fontWeight: 500, fontFamily: "'DM Sans', sans-serif",
               color: isZero ? "#888" : isPositive ? "#00E676" : "#FF5252",
             }}>
               {isPositive ? "+" : "-"}{formatUsdEstimate(netUsd, Object.keys(netPositions).some(c => c !== "USD"))}
@@ -626,35 +626,35 @@ export default function PokerLoans({ session, onBack }) {
       })()}
 
       {/* ==================== HEADER ==================== */}
-      <div style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%)", padding: "20px 20px 0", borderBottom: "1px solid #222" }}>
+      <div style={{ background: "#fff", padding: "20px 20px 0", borderBottom: "1px solid #e8e6e2" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, letterSpacing: "-0.5px", fontFamily: "'Space Mono', monospace" }}>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 500, letterSpacing: "-0.5px", fontFamily: "'DM Sans', sans-serif" }}>
             POKER<span style={{ color: activeTab === "debts" ? "#e53935" : "#43A047" }}>LOANS</span>
           </h1>
           <div style={{ display: "flex", gap: 8 }}>
-            {onBack && <button onClick={onBack} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Back to Dashboard">‹</button>}
-            <button onClick={() => setShowCurrencyModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Currencies">💱</button>
-            <button onClick={() => setShowRemindersModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Reminders">🔔</button>
-            <button onClick={() => setShowPersonHistoryModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="History">📋</button>
-            <button onClick={() => setShowExportModal(true)} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Export">📤</button>
-            <button onClick={handleSignOut} style={{ background: "#2a2a2a", border: "1px solid #444", color: "#fff", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Sign Out">🚪</button>
+            {onBack && <button onClick={onBack} style={{ background: "#fff", border: "1px solid #e8e6e2", color: "#888", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Back to Dashboard">‹</button>}
+            <button onClick={() => setShowCurrencyModal(true)} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Currencies">💱</button>
+            <button onClick={() => setShowRemindersModal(true)} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Reminders">🔔</button>
+            <button onClick={() => setShowPersonHistoryModal(true)} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="History">📋</button>
+            <button onClick={() => setShowExportModal(true)} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Export">📤</button>
+            <button onClick={handleSignOut} style={{ background: "#f0eee9", border: "1px solid #e8e6e2", color: "#1a1a1a", width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }} title="Sign Out">🚪</button>
           </div>
         </div>
         <div style={{ display: "flex", gap: 0 }}>
-          <button onClick={() => { setActiveTab("loans"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "loans" ? "#43A047" : "#1e1e1e", border: "none", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", borderRadius: "10px 0 0 0", fontFamily: "'Space Mono', monospace", letterSpacing: 1, transition: "all 0.2s" }}>
+          <button onClick={() => { setActiveTab("loans"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "loans" ? "#43A047" : "#1e1e1e", border: "none", color: "#1a1a1a", fontWeight: 500, fontSize: 14, cursor: "pointer", borderRadius: "10px 0 0 0", fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.2s" }}>
             <div>LOANS</div>
             <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(loansUsdTotal, Object.keys(loansByCurrency).some(c => c !== "USD"))}</div>
             {Object.keys(loansByCurrency).length > 1 && activeTab === "loans" && (
-              <div onClick={(e) => { e.stopPropagation(); setExpandedLoansTab(!expandedLoansTab); }} style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, cursor: "pointer" }}>
+              <div onClick={(e) => { e.stopPropagation(); setExpandedLoansTab(!expandedLoansTab); }} style={{ fontSize: 10, color: "#aaa", marginTop: 4, cursor: "pointer" }}>
                 {expandedLoansTab ? "▲ hide details" : "▼ show details"}
               </div>
             )}
           </button>
-          <button onClick={() => { setActiveTab("debts"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "debts" ? "#e53935" : "#1e1e1e", border: "none", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", borderRadius: "0 10px 0 0", fontFamily: "'Space Mono', monospace", letterSpacing: 1, transition: "all 0.2s" }}>
+          <button onClick={() => { setActiveTab("debts"); setExpandedLoansTab(false); setExpandedDebtsTab(false); }} style={{ flex: 1, padding: "12px 0", background: activeTab === "debts" ? "#e53935" : "#1e1e1e", border: "none", color: "#1a1a1a", fontWeight: 500, fontSize: 14, cursor: "pointer", borderRadius: "0 10px 0 0", fontFamily: "'DM Sans', sans-serif", letterSpacing: 1, transition: "all 0.2s" }}>
             <div>DEBTS</div>
             <div style={{ fontSize: 16, marginTop: 2 }}>{formatUsdEstimate(debtsUsdTotal, Object.keys(debtsByCurrency).some(c => c !== "USD"))}</div>
             {Object.keys(debtsByCurrency).length > 1 && activeTab === "debts" && (
-              <div onClick={(e) => { e.stopPropagation(); setExpandedDebtsTab(!expandedDebtsTab); }} style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, cursor: "pointer" }}>
+              <div onClick={(e) => { e.stopPropagation(); setExpandedDebtsTab(!expandedDebtsTab); }} style={{ fontSize: 10, color: "#aaa", marginTop: 4, cursor: "pointer" }}>
                 {expandedDebtsTab ? "▲ hide details" : "▼ show details"}
               </div>
             )}
@@ -662,11 +662,11 @@ export default function PokerLoans({ session, onBack }) {
         </div>
         {/* Currency breakdown accordion */}
         {((activeTab === "loans" && expandedLoansTab) || (activeTab === "debts" && expandedDebtsTab)) && (
-          <div style={{ background: "#1a1a1a", padding: "8px 20px", borderBottom: "1px solid #333" }}>
+          <div style={{ background: "#fff", padding: "8px 20px", borderBottom: "1px solid #e8e6e2" }}>
             {Object.entries(activeTab === "loans" ? loansByCurrency : debtsByCurrency).map(([curr, total]) => (
               <div key={curr} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
-                <span style={{ fontSize: 12, color: "#888" }}>{curr}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#ccc" }}>{formatAmountWithConfig(total, curr)}</span>
+                <span style={{ fontSize: 12, color: "#999" }}>{curr}</span>
+                <span style={{ fontSize: 13, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#333" }}>{formatAmountWithConfig(total, curr)}</span>
               </div>
             ))}
           </div>
@@ -674,14 +674,14 @@ export default function PokerLoans({ session, onBack }) {
       </div>
 
       {/* Search & Sort */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 20px", background: "#1a1a1a", borderBottom: "1px solid #222" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 20px", background: "#fff", borderBottom: "1px solid #e8e6e2" }}>
         <div style={{ flex: 1, position: "relative" }}>
-          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#666", fontSize: 14 }}>🔍</span>
+          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa", fontSize: 14 }}>🔍</span>
           <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ ...inputStyle, paddingLeft: 36, background: "#222", border: "1px solid #333" }} />
+            style={{ ...inputStyle, paddingLeft: 36, background: "#f0eee9", border: "1px solid #e8e6e2" }} />
         </div>
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-          style={{ ...inputStyle, width: "auto", background: "#222", border: "1px solid #333", cursor: "pointer", appearance: "none", paddingRight: 28 }}>
+          style={{ ...inputStyle, width: "auto", background: "#f0eee9", border: "1px solid #e8e6e2", cursor: "pointer", appearance: "none", paddingRight: 28 }}>
           <option value="amount">Sort: Amount</option>
           <option value="name">Sort: Name</option>
         </select>
@@ -690,10 +690,10 @@ export default function PokerLoans({ session, onBack }) {
       {/* ==================== LIST ==================== */}
       <div>
         {groupedList.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "60px 20px", color: "#555" }}>
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "#bbb" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>{activeTab === "debts" ? "💸" : "💰"}</div>
             <div style={{ fontSize: 16, fontWeight: 600 }}>No {activeTab} yet</div>
-            <div style={{ fontSize: 13, marginTop: 6, color: "#444" }}>Tap the + button to create one</div>
+            <div style={{ fontSize: 13, marginTop: 6, color: "#ccc" }}>Tap the + button to create one</div>
           </div>
         ) : (
           groupedList.map((group, groupIndex) => {
@@ -711,21 +711,21 @@ export default function PokerLoans({ session, onBack }) {
                   if (action === "collect") { setCollectAmount(String(Number(person.balance))); setShowCollectModal(person); }
                   else if (action === "delete") setShowDeleteConfirm(person);
                 }}>
-                  <div onClick={() => setShowPersonDetail(person)} style={{ background: bgColor, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(0,0,0,0.15)" }}>
+                  <div onClick={() => setShowPersonDetail(person)} style={{ background: bgColor, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid #f0eee9" }}>
                     <div>
-                      <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>{person.name}</div>
-                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
-                        {curr !== "USD" && <span style={{ background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 4, marginRight: 6, fontSize: 10, fontWeight: 700 }}>{curr}</span>}
+                      <div style={{ fontSize: 17, fontWeight: 500, color: "#1a1a1a", textShadow: "none" }}>{person.name}</div>
+                      <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>
+                        {curr !== "USD" && <span style={{ background: "#f0eee9", padding: "1px 5px", borderRadius: 4, marginRight: 6, fontSize: 10, fontWeight: 500 }}>{curr}</span>}
                         {Number(person.interest_rate) > 0 && <span>{person.interest_rate}% interest • +{formatAmountWithConfig(interest, curr)} accrued</span>}
                       </div>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
-                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 18 }}>›</span>
+                        <span style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#1a1a1a", textShadow: "none" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
+                        <span style={{ color: "#aaa", fontSize: 18 }}>›</span>
                       </div>
                       {curr !== "USD" && usdRates[curr.toUpperCase()] && (
-                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontFamily: "'Space Mono', monospace" }}>{formatUsdEstimate(toUsd(Number(person.balance), curr))}</span>
+                        <span style={{ fontSize: 11, color: "#bbb", fontFamily: "'DM Sans', sans-serif" }}>{formatUsdEstimate(toUsd(Number(person.balance), curr))}</span>
                       )}
                     </div>
                   </div>
@@ -737,20 +737,20 @@ export default function PokerLoans({ session, onBack }) {
             const bgColor = activeTab === "debts" ? getDebtColor(groupIndex, groupedList.length) : getLoanColor(groupIndex, groupedList.length);
             return (
               <div key={group.name}>
-                <div onClick={() => toggleGroup(group.name)} style={{ background: bgColor, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(0,0,0,0.15)" }}>
+                <div onClick={() => toggleGroup(group.name)} style={{ background: bgColor, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid #f0eee9" }}>
                   <div>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>{group.name}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
-                      <span style={{ background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 4, fontSize: 10, fontWeight: 700 }}>{group.entries.length} {group.entries.length === 1 ? "currency" : "currencies"}</span>
+                    <div style={{ fontSize: 17, fontWeight: 500, color: "#1a1a1a", textShadow: "none" }}>{group.name}</div>
+                    <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>
+                      <span style={{ background: "#f0eee9", padding: "1px 5px", borderRadius: 4, fontSize: 10, fontWeight: 500 }}>{group.entries.length} {group.entries.length === 1 ? "currency" : "currencies"}</span>
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>{formatUsdEstimate(group.totalUsd, group.entries.some(p => (p.currency || "USD") !== "USD"))}</span>
-                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 18, transform: isExpanded ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>›</span>
+                    <span style={{ fontSize: 20, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#1a1a1a", textShadow: "none" }}>{formatUsdEstimate(group.totalUsd, group.entries.some(p => (p.currency || "USD") !== "USD"))}</span>
+                    <span style={{ color: "#aaa", fontSize: 18, transform: isExpanded ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>›</span>
                   </div>
                 </div>
                 {isExpanded && (
-                  <div style={{ background: "rgba(0,0,0,0.2)" }}>
+                  <div style={{ background: "#f5f4f2" }}>
                     {group.entries.map((person) => {
                       const curr = person.currency || "USD";
                       const interest = calculateInterest(Number(person.balance), Number(person.interest_rate), person.created_at);
@@ -759,18 +759,18 @@ export default function PokerLoans({ session, onBack }) {
                           if (action === "collect") { setCollectAmount(String(Number(person.balance))); setShowCollectModal(person); }
                           else if (action === "delete") setShowDeleteConfirm(person);
                         }}>
-                          <div onClick={() => setShowPersonDetail(person)} style={{ padding: "12px 20px 12px 36px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "#1a1a1a" }}>
+                          <div onClick={() => setShowPersonDetail(person)} style={{ padding: "12px 20px 12px 36px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderBottom: "1px solid #f0eee9", background: "#fff" }}>
                             <div>
-                              <span style={{ background: "rgba(255,255,255,0.12)", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>{curr}</span>
-                              {Number(person.interest_rate) > 0 && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginLeft: 8 }}>{person.interest_rate}% • +{formatAmountWithConfig(interest, curr)}</span>}
+                              <span style={{ background: "#f0eee9", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 500, color: "#888" }}>{curr}</span>
+                              {Number(person.interest_rate) > 0 && <span style={{ fontSize: 11, color: "#bbb", marginLeft: 8 }}>{person.interest_rate}% • +{formatAmountWithConfig(interest, curr)}</span>}
                             </div>
                             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <span style={{ fontSize: 17, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#fff" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
-                                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>›</span>
+                                <span style={{ fontSize: 17, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#1a1a1a" }}>{formatAmountWithConfig(Number(person.balance), curr)}</span>
+                                <span style={{ color: "#ccc", fontSize: 14 }}>›</span>
                               </div>
                               {curr !== "USD" && usdRates[curr.toUpperCase()] && (
-                                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontFamily: "'Space Mono', monospace" }}>{formatUsdEstimate(toUsd(Number(person.balance), curr))}</span>
+                                <span style={{ fontSize: 10, color: "#ccc", fontFamily: "'DM Sans', sans-serif" }}>{formatUsdEstimate(toUsd(Number(person.balance), curr))}</span>
                               )}
                             </div>
                           </div>
@@ -787,14 +787,14 @@ export default function PokerLoans({ session, onBack }) {
 
       {/* FAB */}
       <button onClick={() => { setNewType(activeTab === "debts" ? "debt" : "loan"); setShowCreateModal(true); }}
-        style={{ position: "fixed", bottom: 24, right: "calc(50% - 210px)", width: 56, height: 56, borderRadius: "50%", background: activeTab === "debts" ? "#e53935" : "#43A047", border: "none", color: "#fff", fontSize: 28, fontWeight: 300, cursor: "pointer", boxShadow: `0 4px 20px ${activeTab === "debts" ? "rgba(229,57,53,0.5)" : "rgba(67,160,71,0.5)"}`, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>+</button>
+        style={{ position: "fixed", bottom: 24, right: "calc(50% - 210px)", width: 56, height: 56, borderRadius: "50%", background: activeTab === "debts" ? "#e53935" : "#43A047", border: "none", color: "#1a1a1a", fontSize: 28, fontWeight: 300, cursor: "pointer", boxShadow: `0 4px 16px ${activeTab === "debts" ? "rgba(198,40,40,0.25)" : "rgba(46,125,50,0.25)"}`, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>+</button>
 
       {/* ==================== CREATE MODAL ==================== */}
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={`Create New ${newType === "debt" ? "Debt" : "Loan"}`}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
-            <button onClick={() => setNewType("loan")} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: newType === "loan" ? "#43A047" : "#2a2a2a", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>💰 Loan</button>
-            <button onClick={() => setNewType("debt")} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: newType === "debt" ? "#e53935" : "#2a2a2a", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>💸 Debt</button>
+            <button onClick={() => setNewType("loan")} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: newType === "loan" ? "#43A047" : "#2a2a2a", color: "#1a1a1a", fontWeight: 500, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>💰 Loan</button>
+            <button onClick={() => setNewType("debt")} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: newType === "debt" ? "#e53935" : "#2a2a2a", color: "#1a1a1a", fontWeight: 500, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>💸 Debt</button>
           </div>
           <div><label style={labelStyle}>Name</label><input type="text" placeholder="e.g. Jimmy" value={newName} onChange={(e) => setNewName(e.target.value)} style={inputStyle} autoFocus /></div>
           <div style={{ display: "flex", gap: 10 }}>
@@ -808,7 +808,7 @@ export default function PokerLoans({ session, onBack }) {
           </div>
           <div><label style={labelStyle}>Annual Interest Rate (%) — optional</label><input type="number" placeholder="0" value={newInterestRate} onChange={(e) => setNewInterestRate(e.target.value)} style={inputStyle} min="0" step="0.1" /></div>
           <div><label style={labelStyle}>Note — optional</label><textarea placeholder="Add a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} style={{ ...inputStyle, minHeight: 60, resize: "vertical" }} /></div>
-          <button onClick={handleCreate} disabled={creating} style={{ padding: "14px", background: creating ? "#555" : (newType === "debt" ? "#e53935" : "#43A047"), border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: creating ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", marginTop: 4, opacity: creating ? 0.6 : 1 }}>{creating ? "Creating..." : `+ CREATE ${newType === "debt" ? "DEBT" : "LOAN"}`}</button>
+          <button onClick={handleCreate} disabled={creating} style={{ padding: "14px", background: creating ? "#555" : (newType === "debt" ? "#e53935" : "#43A047"), border: "none", borderRadius: 12, color: "#1a1a1a", fontSize: 16, fontWeight: 500, cursor: creating ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif", marginTop: 4, opacity: creating ? 0.6 : 1 }}>{creating ? "Creating..." : `+ CREATE ${newType === "debt" ? "DEBT" : "LOAN"}`}</button>
         </div>
       </Modal>
 
@@ -819,27 +819,27 @@ export default function PokerLoans({ session, onBack }) {
           const fullBalance = Number(showCollectModal.balance);
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ background: "#222", borderRadius: 12, padding: 16, textAlign: "center" }}>
-                <div style={{ fontSize: 13, color: "#999", marginBottom: 4 }}>Current Balance {curr !== "USD" && <span style={{ color: "#666" }}>({curr})</span>}</div>
-                <div style={{ fontSize: 28, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: showCollectModal.type === "debt" ? "#e53935" : "#43A047" }}>{formatAmountWithConfig(fullBalance, curr)}</div>
+              <div style={{ background: "#f0eee9", borderRadius: 12, padding: 16, textAlign: "center" }}>
+                <div style={{ fontSize: 13, color: "#999", marginBottom: 4 }}>Current Balance {curr !== "USD" && <span style={{ color: "#aaa" }}>({curr})</span>}</div>
+                <div style={{ fontSize: 28, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: showCollectModal.type === "debt" ? "#e53935" : "#43A047" }}>{formatAmountWithConfig(fullBalance, curr)}</div>
               </div>
               <div>
                 <label style={labelStyle}>Amount to {showCollectModal.type === "debt" ? "Pay" : "Collect"} ({getAllCurrencyConfig(curr).symbol})</label>
                 <input type="number" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} style={inputStyle} min="0" step="any" autoFocus />
                 {collectAmount && parseFloat(collectAmount) > fullBalance && (
-                  <div style={{ fontSize: 12, color: "#FFB800", marginTop: 6, padding: "8px 12px", background: "rgba(255,184,0,0.1)", borderRadius: 8 }}>
+                  <div style={{ fontSize: 12, color: "#b8860b", marginTop: 6, padding: "8px 12px", background: "#fff8e1", borderRadius: 8 }}>
                     ⚠️ Exceeds balance by {formatAmountWithConfig(parseFloat(collectAmount) - fullBalance, curr)}. {showCollectModal.name} will flip to a <strong>{showCollectModal.type === "debt" ? "loan" : "debt"}</strong>.
                   </div>
                 )}
                 {collectAmount && parseFloat(collectAmount) < fullBalance && parseFloat(collectAmount) > 0 && (
-                  <div style={{ fontSize: 12, color: "#8888aa", marginTop: 6 }}>
+                  <div style={{ fontSize: 12, color: "#999", marginTop: 6 }}>
                     Remaining after {showCollectModal.type === "debt" ? "payment" : "collection"}: {formatAmountWithConfig(fullBalance - parseFloat(collectAmount), curr)}
                   </div>
                 )}
               </div>
               <div><label style={labelStyle}>Note — optional</label><input type="text" placeholder="Payment note..." value={collectNote} onChange={(e) => setCollectNote(e.target.value)} style={inputStyle} /></div>
               <button onClick={() => { const amount = parseFloat(collectAmount); if (!amount || amount <= 0) return; const isDebt = showCollectModal.type === "debt"; handleTransaction(showCollectModal, amount, "collect", collectNote || (amount >= fullBalance ? (isDebt ? "Full payment" : "Full collection") : (isDebt ? "Partial payment" : "Partial collection"))); setShowCollectModal(null); setCollectAmount(""); setCollectNote(""); }}
-                style={{ padding: "14px", background: "#00C853", border: "none", borderRadius: 12, color: "#000", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+                style={{ padding: "14px", background: "#2e7d32", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
                 ✓ {showCollectModal.type === "debt" ? "Pay" : "Collect"} {collectAmount ? formatAmountWithConfig(parseFloat(collectAmount) || 0, curr) : formatAmountWithConfig(fullBalance, curr)}
               </button>
             </div>
@@ -851,22 +851,22 @@ export default function PokerLoans({ session, onBack }) {
       <Modal isOpen={!!showDeleteConfirm} onClose={() => setShowDeleteConfirm(null)} title="Confirm Delete">
         {showDeleteConfirm && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ background: "#2a1a1a", borderRadius: 12, padding: 16, textAlign: "center", border: "1px solid #4a2a2a" }}>
-              <div style={{ fontSize: 14, color: "#ccc", marginBottom: 8 }}>Are you sure you want to delete this record?</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>{showDeleteConfirm.name}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: showDeleteConfirm.type === "debt" ? "#e53935" : "#43A047", marginTop: 4 }}>
+            <div style={{ background: "#fce8e8", borderRadius: 12, padding: 16, textAlign: "center", border: "1px solid #f5c6c6" }}>
+              <div style={{ fontSize: 14, color: "#333", marginBottom: 8 }}>Are you sure you want to delete this record?</div>
+              <div style={{ fontSize: 18, fontWeight: 500, color: "#1a1a1a" }}>{showDeleteConfirm.name}</div>
+              <div style={{ fontSize: 22, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: showDeleteConfirm.type === "debt" ? "#e53935" : "#43A047", marginTop: 4 }}>
                 {formatAmountWithConfig(Number(showDeleteConfirm.balance), showDeleteConfirm.currency || "USD")}
               </div>
               <div style={{ fontSize: 12, color: "#999", marginTop: 6 }}>This action cannot be undone.</div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => setShowDeleteConfirm(null)} style={{ flex: 1, padding: "14px", background: "#333", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Cancel</button>
+              <button onClick={() => setShowDeleteConfirm(null)} style={{ flex: 1, padding: "14px", background: "#e8e6e2", border: "none", borderRadius: 12, color: "#1a1a1a", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Cancel</button>
               <button onClick={async () => {
                 await supabase.from("transactions").delete().eq("person_id", showDeleteConfirm.id);
                 await supabase.from("people").delete().eq("id", showDeleteConfirm.id);
                 setShowDeleteConfirm(null);
                 fetchData();
-              }} style={{ flex: 1, padding: "14px", background: "#e53935", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Delete</button>
+              }} style={{ flex: 1, padding: "14px", background: "#c62828", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Delete</button>
             </div>
           </div>
         )}
@@ -878,54 +878,54 @@ export default function PokerLoans({ session, onBack }) {
           const curr = showPersonDetail.currency || "USD";
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ background: showPersonDetail.type === "debt" ? "linear-gradient(135deg, #e53935, #b71c1c)" : "linear-gradient(135deg, #43A047, #2E7D32)", borderRadius: 14, padding: 20, textAlign: "center" }}>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>{showPersonDetail.type === "debt" ? "You owe them" : "They owe you"}</div>
-                <div style={{ fontSize: 34, fontWeight: 800, fontFamily: "'Space Mono', monospace" }}>{formatAmountWithConfig(Number(showPersonDetail.balance), curr)}</div>
-                {curr !== "USD" && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 4 }}>{curr}</div>}
+              <div style={{ background: showPersonDetail.type === "debt" ? "#fce8e8" : "#e8f5e9", borderRadius: 14, padding: 20, textAlign: "center" }}>
+                <div style={{ fontSize: 13, color: "#888", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>{showPersonDetail.type === "debt" ? "You owe them" : "They owe you"}</div>
+                <div style={{ fontSize: 34, fontWeight: 500, fontFamily: "'DM Sans', sans-serif" }}>{formatAmountWithConfig(Number(showPersonDetail.balance), curr)}</div>
+                {curr !== "USD" && <div style={{ fontSize: 12, color: "#bbb", marginTop: 4 }}>{curr}</div>}
                 {Number(showPersonDetail.interest_rate) > 0 && (
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 6 }}>{showPersonDetail.interest_rate}% interest • +{formatAmountWithConfig(calculateInterest(Number(showPersonDetail.balance), Number(showPersonDetail.interest_rate), showPersonDetail.created_at), curr)} accrued</div>
+                  <div style={{ fontSize: 12, color: "#888", marginTop: 6 }}>{showPersonDetail.interest_rate}% interest • +{formatAmountWithConfig(calculateInterest(Number(showPersonDetail.balance), Number(showPersonDetail.interest_rate), showPersonDetail.created_at), curr)} accrued</div>
                 )}
               </div>
-              <div style={{ fontSize: 12, color: "#666" }}>Created {formatDateTime(showPersonDetail.created_at)} • Original: {formatAmountWithConfig(Number(showPersonDetail.original_amount), curr)}</div>
+              <div style={{ fontSize: 12, color: "#aaa" }}>Created {formatDateTime(showPersonDetail.created_at)} • Original: {formatAmountWithConfig(Number(showPersonDetail.original_amount), curr)}</div>
               {showPersonDetail.notes && showPersonDetail.notes.length > 0 && (
                 <div>
                   <div style={{ ...labelStyle, marginBottom: 8 }}>Notes</div>
                   {showPersonDetail.notes.map((note, i) => (
-                    <div key={i} style={{ background: "#222", borderRadius: 8, padding: "10px 12px", marginBottom: 6, fontSize: 13 }}>
-                      <div style={{ color: "#ccc" }}>{note.text}</div>
-                      <div style={{ color: "#555", fontSize: 11, marginTop: 4 }}>{formatDateTime(note.date)}</div>
+                    <div key={i} style={{ background: "#f0eee9", borderRadius: 8, padding: "10px 12px", marginBottom: 6, fontSize: 13 }}>
+                      <div style={{ color: "#333" }}>{note.text}</div>
+                      <div style={{ color: "#bbb", fontSize: 11, marginTop: 4 }}>{formatDateTime(note.date)}</div>
                     </div>
                   ))}
                 </div>
               )}
               <div>
                 <div style={{ ...labelStyle, marginBottom: 8 }}>Transaction History</div>
-                {personTransactions.length === 0 ? <div style={{ color: "#555", fontSize: 13 }}>No transactions yet</div> : (
+                {personTransactions.length === 0 ? <div style={{ color: "#bbb", fontSize: 13 }}>No transactions yet</div> : (
                   personTransactions.map((t) => (
-                    <div key={t.id} style={{ background: "#222", borderRadius: 8, padding: "10px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div key={t.id} style={{ background: "#f0eee9", borderRadius: 8, padding: "10px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
-                        <div style={{ fontSize: 13, color: "#ccc", fontWeight: 600 }}>
+                        <div style={{ fontSize: 13, color: "#333", fontWeight: 600 }}>
                           {t.type === "created" && "Created"}{t.type === "partial_collect" && (t.entry_type === "debt" ? "Partial Payment" : "Partial Collection")}{t.type === "completed" && "✓ Completed"}{t.type === "flipped" && "⇄ Flipped"}{t.type === "added" && "Added More"}
                         </div>
-                        {t.note && <div style={{ fontSize: 11, color: "#777", marginTop: 2 }}>{t.note}</div>}
-                        <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{formatDateTime(t.created_at)}</div>
+                        {t.note && <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{t.note}</div>}
+                        <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>{formatDateTime(t.created_at)}</div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 15, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: t.type === "added" || t.type === "created" ? "#FFB800" : "#00C853" }}>
+                        <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: t.type === "added" || t.type === "created" ? "#FFB800" : "#00C853" }}>
                           {t.type === "added" || t.type === "created" ? "+" : "-"}{formatAmountWithConfig(Number(t.amount), curr)}
                         </div>
-                        <div style={{ fontSize: 11, color: "#555" }}>Bal: {formatAmountWithConfig(Number(t.balance_after), curr)}</div>
+                        <div style={{ fontSize: 11, color: "#bbb" }}>Bal: {formatAmountWithConfig(Number(t.balance_after), curr)}</div>
                       </div>
                     </div>
                   ))
                 )}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => { setShowPersonDetail(null); setShowCollectModal(showPersonDetail); setCollectAmount(String(Number(showPersonDetail.balance))); }} style={{ flex: 1, padding: "12px", background: "#00C853", border: "none", borderRadius: 10, color: "#000", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>{showPersonDetail.type === "debt" ? "Pay" : "Collect"}</button>
-                <button onClick={() => setShowAddMoreInline(showAddMoreInline === showPersonDetail.id ? null : showPersonDetail.id)} style={{ flex: 1, padding: "12px", background: "#2196F3", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Add More</button>
+                <button onClick={() => { setShowPersonDetail(null); setShowCollectModal(showPersonDetail); setCollectAmount(String(Number(showPersonDetail.balance))); }} style={{ flex: 1, padding: "12px", background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>{showPersonDetail.type === "debt" ? "Pay" : "Collect"}</button>
+                <button onClick={() => setShowAddMoreInline(showAddMoreInline === showPersonDetail.id ? null : showPersonDetail.id)} style={{ flex: 1, padding: "12px", background: "#1565c0", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Add More</button>
               </div>
               {showAddMoreInline === showPersonDetail.id && (
-                <div style={{ background: "#222", borderRadius: 10, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ background: "#f0eee9", borderRadius: 10, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
                   <div><label style={labelStyle}>Amount to Add ({getAllCurrencyConfig(curr).symbol})</label><input type="number" placeholder="0.00" value={addMoreInlineAmount} onChange={(e) => setAddMoreInlineAmount(e.target.value)} style={inputStyle} min="0" step="any" autoFocus /></div>
                   <div><label style={labelStyle}>Note — optional</label><input type="text" placeholder="Reason..." value={addMoreInlineNote} onChange={(e) => setAddMoreInlineNote(e.target.value)} style={inputStyle} /></div>
                   <button onClick={async () => {
@@ -933,7 +933,7 @@ export default function PokerLoans({ session, onBack }) {
                     if (!amount || amount <= 0) return;
                     await handleTransaction(showPersonDetail, amount, "add", addMoreInlineNote || `Added ${formatAmountWithConfig(amount, curr)}`);
                     setAddMoreInlineAmount(""); setAddMoreInlineNote(""); setShowAddMoreInline(null); setShowPersonDetail(null);
-                  }} style={{ padding: "12px", background: "#2196F3", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>
+                  }} style={{ padding: "12px", background: "#1565c0", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>
                     + Add {addMoreInlineAmount ? formatAmountWithConfig(parseFloat(addMoreInlineAmount) || 0, curr) : `${getAllCurrencyConfig(curr).symbol}0.00`}
                   </button>
                 </div>
@@ -947,7 +947,7 @@ export default function PokerLoans({ session, onBack }) {
       <Modal isOpen={showPersonHistoryModal} onClose={() => { setShowPersonHistoryModal(false); setPersonHistorySearch(""); }} title="Transaction History">
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ position: "relative" }}>
-            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#666", fontSize: 14 }}>🔍</span>
+            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa", fontSize: 14 }}>🔍</span>
             <input type="text" placeholder="Search by name..." value={personHistorySearch} onChange={(e) => setPersonHistorySearch(e.target.value)}
               style={{ ...inputStyle, paddingLeft: 36 }} autoFocus />
           </div>
@@ -964,11 +964,11 @@ export default function PokerLoans({ session, onBack }) {
               : [...allNames].sort();
 
             if (filteredNames.length === 0 && query) {
-              return <div style={{ color: "#555", textAlign: "center", padding: 20 }}>No results for "{personHistorySearch}"</div>;
+              return <div style={{ color: "#bbb", textAlign: "center", padding: 20 }}>No results for "{personHistorySearch}"</div>;
             }
 
             if (!query) {
-              return <div style={{ color: "#666", textAlign: "center", padding: 20, fontSize: 14 }}>Type a name to see their complete transaction history</div>;
+              return <div style={{ color: "#aaa", textAlign: "center", padding: 20, fontSize: 14 }}>Type a name to see their complete transaction history</div>;
             }
 
             return filteredNames.map((name) => {
@@ -977,21 +977,21 @@ export default function PokerLoans({ session, onBack }) {
               const personActive = people.filter((p) => p.name === name);
 
               return (
-                <div key={name} style={{ background: "#1a1a1a", borderRadius: 12, border: "1px solid #333", overflow: "hidden", marginBottom: 4 }}>
+                <div key={name} style={{ background: "#fff", borderRadius: 12, border: "1px solid #e8e6e2", overflow: "hidden", marginBottom: 4 }}>
                   <div style={{ padding: "12px 14px", borderBottom: "1px solid #2a2a2a" }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>{name}</div>
+                    <div style={{ fontSize: 16, fontWeight: 500, color: "#1a1a1a" }}>{name}</div>
                     <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
                       {personActive.map((p) => (
-                        <span key={p.id} style={{ fontSize: 12, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: p.type === "debt" ? "#e53935" : "#43A047", background: p.type === "debt" ? "rgba(229,57,53,0.1)" : "rgba(67,160,71,0.1)", padding: "3px 8px", borderRadius: 6 }}>
+                        <span key={p.id} style={{ fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: p.type === "debt" ? "#e53935" : "#43A047", background: p.type === "debt" ? "rgba(229,57,53,0.1)" : "rgba(67,160,71,0.1)", padding: "3px 8px", borderRadius: 6 }}>
                           {p.type === "debt" ? "Owes" : "Owed"} {formatAmountWithConfig(Number(p.balance), p.currency || "USD")}
                         </span>
                       ))}
-                      {personActive.length === 0 && <span style={{ fontSize: 12, color: "#555" }}>No active balances</span>}
+                      {personActive.length === 0 && <span style={{ fontSize: 12, color: "#bbb" }}>No active balances</span>}
                     </div>
                   </div>
                   <div style={{ maxHeight: 300, overflowY: "auto" }}>
                     {personTxns.length === 0 && personCompleted.length === 0 ? (
-                      <div style={{ color: "#555", textAlign: "center", padding: 16, fontSize: 13 }}>No transaction records</div>
+                      <div style={{ color: "#bbb", textAlign: "center", padding: 16, fontSize: 13 }}>No transaction records</div>
                     ) : (
                       <>
                         {personTxns.map((t) => {
@@ -999,17 +999,17 @@ export default function PokerLoans({ session, onBack }) {
                           return (
                             <div key={t.id} style={{ padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1f1f1f" }}>
                               <div>
-                                <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600 }}>
+                                <div style={{ fontSize: 12, color: "#333", fontWeight: 600 }}>
                                   {t.type === "created" && "Created"}{t.type === "partial_collect" && (t.entry_type === "debt" ? "Partial Payment" : "Partial Collection")}{t.type === "completed" && "✓ Completed"}{t.type === "flipped" && "⇄ Flipped"}{t.type === "added" && "Added More"}
                                 </div>
-                                {t.note && <div style={{ fontSize: 10, color: "#777", marginTop: 1 }}>{t.note}</div>}
-                                <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>{formatDateTime(t.created_at)}</div>
+                                {t.note && <div style={{ fontSize: 10, color: "#999", marginTop: 1 }}>{t.note}</div>}
+                                <div style={{ fontSize: 10, color: "#bbb", marginTop: 1 }}>{formatDateTime(t.created_at)}</div>
                               </div>
                               <div style={{ textAlign: "right" }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: t.type === "added" || t.type === "created" ? "#FFB800" : "#00C853" }}>
+                                <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: t.type === "added" || t.type === "created" ? "#FFB800" : "#00C853" }}>
                                   {t.type === "added" || t.type === "created" ? "+" : "-"}{formatAmountWithConfig(Number(t.amount), tCurr)}
                                 </div>
-                                {tCurr !== "USD" && <div style={{ fontSize: 9, color: "#555" }}>{tCurr}</div>}
+                                {tCurr !== "USD" && <div style={{ fontSize: 9, color: "#bbb" }}>{tCurr}</div>}
                               </div>
                             </div>
                           );
@@ -1019,10 +1019,10 @@ export default function PokerLoans({ session, onBack }) {
                           return (
                             <div key={r.id} style={{ padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1f1f1f", background: "rgba(0,200,83,0.03)" }}>
                               <div>
-                                <div style={{ fontSize: 12, color: "#00C853", fontWeight: 600 }}>✓ {r.type === "debt" ? "Fully Paid" : "Fully Collected"}</div>
-                                <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>Originally: {r.type} • {formatDate(r.completed_at)}</div>
+                                <div style={{ fontSize: 12, color: "#2e7d32", fontWeight: 600 }}>✓ {r.type === "debt" ? "Fully Paid" : "Fully Collected"}</div>
+                                <div style={{ fontSize: 10, color: "#bbb", marginTop: 1 }}>Originally: {r.type} • {formatDate(r.completed_at)}</div>
                               </div>
-                              <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#00C853" }}>
+                              <div style={{ fontSize: 13, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: "#2e7d32" }}>
                                 {formatAmountWithConfig(Number(r.original_amount), rCurr)}
                               </div>
                             </div>
@@ -1042,7 +1042,7 @@ export default function PokerLoans({ session, onBack }) {
       <Modal isOpen={showExportModal} onClose={() => setShowExportModal(false)} title="Export Data">
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ color: "#999", fontSize: 14 }}>Export all your data including currency info.</div>
-          <button onClick={exportCSV} style={{ padding: "14px", background: "#2196F3", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>📄 Export as CSV</button>
+          <button onClick={exportCSV} style={{ padding: "14px", background: "#1565c0", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>📄 Export as CSV</button>
         </div>
       </Modal>
 
@@ -1052,7 +1052,7 @@ export default function PokerLoans({ session, onBack }) {
           <div style={{ ...labelStyle }}>Built-in Currencies</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {CURRENCIES.map((c) => (
-              <span key={c.code} style={{ background: "#2a2a2a", padding: "6px 12px", borderRadius: 8, fontSize: 13, color: "#ccc" }}>
+              <span key={c.code} style={{ background: "#f0eee9", padding: "6px 12px", borderRadius: 8, fontSize: 13, color: "#333" }}>
                 {c.symbol} {c.code}
               </span>
             ))}
@@ -1062,25 +1062,25 @@ export default function PokerLoans({ session, onBack }) {
               <div style={{ ...labelStyle }}>Custom Currencies</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {customCurrencies.map((c) => (
-                  <span key={c.code} style={{ background: "#2a3a2a", padding: "6px 12px", borderRadius: 8, fontSize: 13, color: "#8f8", border: "1px solid #3a5a3a" }}>
+                  <span key={c.code} style={{ background: "#e8f5e9", padding: "6px 12px", borderRadius: 8, fontSize: 13, color: "#2e7d32", border: "1px solid #c8e6c9" }}>
                     {c.symbol} {c.code}
                     <button onClick={() => {
                       const updated = customCurrencies.filter((x) => x.code !== c.code);
                       setCustomCurrencies(updated);
                       localStorage.setItem("poker-loans-custom-currencies", JSON.stringify(updated));
-                    }} style={{ background: "none", border: "none", color: "#f55", marginLeft: 6, cursor: "pointer", fontSize: 12 }}>×</button>
+                    }} style={{ background: "none", border: "none", color: "#c62828", marginLeft: 6, cursor: "pointer", fontSize: 12 }}>×</button>
                   </span>
                 ))}
               </div>
             </>
           )}
-          <div style={{ borderTop: "1px solid #333", paddingTop: 16 }}>
+          <div style={{ borderTop: "1px solid #e8e6e2", paddingTop: 16 }}>
             <div style={{ ...labelStyle }}>Add Custom Currency</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-              <button onClick={() => setNewCustomType("crypto")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: newCustomType === "crypto" ? "#2196F3" : "#2a2a2a", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>🪙 Crypto</button>
-              <button onClick={() => setNewCustomType("fiat")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: newCustomType === "fiat" ? "#43A047" : "#2a2a2a", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>💵 Fiat</button>
+              <button onClick={() => setNewCustomType("crypto")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: newCustomType === "crypto" ? "#2196F3" : "#2a2a2a", color: "#1a1a1a", fontWeight: 500, cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>🪙 Crypto</button>
+              <button onClick={() => setNewCustomType("fiat")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: "none", background: newCustomType === "fiat" ? "#43A047" : "#2a2a2a", color: "#1a1a1a", fontWeight: 500, cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans', sans-serif" }}>💵 Fiat</button>
             </div>
-            <div style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>{newCustomType === "crypto" ? "Price looked up via CoinGecko by code" : "Exchange rate looked up via forex API by code"}</div>
+            <div style={{ fontSize: 11, color: "#aaa", marginBottom: 8 }}>{newCustomType === "crypto" ? "Price looked up via CoinGecko by code" : "Exchange rate looked up via forex API by code"}</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
               <input type="text" placeholder="Code (e.g. SOL)" value={newCustomCode} onChange={(e) => setNewCustomCode(e.target.value)} style={{ ...inputStyle, flex: 1 }} maxLength={10} />
               <input type="text" placeholder="Symbol (e.g. ◎)" value={newCustomSymbol} onChange={(e) => setNewCustomSymbol(e.target.value)} style={{ ...inputStyle, width: 70 }} maxLength={5} />
@@ -1095,7 +1095,7 @@ export default function PokerLoans({ session, onBack }) {
                 <option value="8">8 dec</option>
               </select>
             </div>
-            <button onClick={addCustomCurrency} style={{ padding: "10px", background: "#43A047", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif", width: "100%" }}>+ Add Currency</button>
+            <button onClick={addCustomCurrency} style={{ padding: "10px", background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif", width: "100%" }}>+ Add Currency</button>
           </div>
         </div>
       </Modal>
@@ -1109,20 +1109,20 @@ export default function PokerLoans({ session, onBack }) {
           </select></div>
           <div><label style={labelStyle}>Reminder Date</label><input type="date" value={reminderDate} onChange={(e) => setReminderDate(e.target.value)} style={inputStyle} /></div>
           <div><label style={labelStyle}>Note — optional</label><input type="text" placeholder="Reminder note..." value={reminderNote} onChange={(e) => setReminderNote(e.target.value)} style={inputStyle} /></div>
-          <button onClick={handleAddReminder} style={{ padding: "12px", background: "#FFB800", border: "none", borderRadius: 12, color: "#000", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>🔔 Set Reminder</button>
+          <button onClick={handleAddReminder} style={{ padding: "12px", background: "#b8860b", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>🔔 Set Reminder</button>
           {reminders.length > 0 && (
             <div style={{ marginTop: 8 }}>
               <div style={{ ...labelStyle, marginBottom: 8 }}>Active Reminders</div>
               {reminders.map((r) => {
                 const isOverdue = new Date(r.reminder_date) < new Date();
                 return (
-                  <div key={r.id} style={{ background: isOverdue ? "#3a1a1a" : "#222", borderRadius: 8, padding: "10px 12px", marginBottom: 6, border: isOverdue ? "1px solid #5a2a2a" : "1px solid #333", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div key={r.id} style={{ background: isOverdue ? "#fff0f0" : "#222", borderRadius: 8, padding: "10px 12px", marginBottom: 6, border: isOverdue ? "1px solid #5a2a2a" : "1px solid #333", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#ccc" }}>{r.person_name}{isOverdue && <span style={{ color: "#e53935", marginLeft: 6, fontSize: 11 }}>OVERDUE</span>}</div>
-                      <div style={{ fontSize: 12, color: "#777" }}>{formatDate(r.reminder_date)}</div>
-                      {r.note && <div style={{ fontSize: 11, color: "#555" }}>{r.note}</div>}
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{r.person_name}{isOverdue && <span style={{ color: "#c62828", marginLeft: 6, fontSize: 11 }}>OVERDUE</span>}</div>
+                      <div style={{ fontSize: 12, color: "#999" }}>{formatDate(r.reminder_date)}</div>
+                      {r.note && <div style={{ fontSize: 11, color: "#bbb" }}>{r.note}</div>}
                     </div>
-                    <button onClick={() => deleteReminder(r.id)} style={{ background: "#333", border: "none", color: "#999", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+                    <button onClick={() => deleteReminder(r.id)} style={{ background: "#e8e6e2", border: "none", color: "#999", width: 28, height: 28, borderRadius: "50%", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
                   </div>
                 );
               })}
