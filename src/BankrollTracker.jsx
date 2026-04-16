@@ -124,6 +124,76 @@ export default function BankrollTracker({ session, onBack }) {
   const [newSessionType, setNewSessionType] = useState("Casino");
   const [profitMode, setProfitMode] = useState("net"); // "net" or "buyin"
 
+  // Presets
+  const DEFAULT_PRESETS = [
+    { name: "Sortis Omaha", game: "Omaha", variant: "Cash Game", location: "Sortis", type: "Casino", smallBlind: "25", bigBlind: "25" },
+    { name: "Sortis BJ", game: "Black Jack", variant: "Cash Game", location: "Sortis", type: "Casino", smallBlind: "100", bigBlind: "100" },
+    { name: "Sortis UTH", game: "UTH", variant: "Cash Game", location: "Sortis", type: "Casino", smallBlind: "10", bigBlind: "20" },
+    { name: "Jacky DC", game: "Dealers Choice", variant: "Cash Game", location: "Jacky Big Game", type: "Home Game", smallBlind: "25", bigBlind: "50" },
+    { name: "Trump DC", game: "Dealers Choice", variant: "Cash Game", location: "Trump-yoo", type: "Home Game", smallBlind: "25", bigBlind: "25" },
+  ];
+
+  const [presets, setPresets] = useState(() => {
+    try {
+      const stored = localStorage.getItem("poker-loans-session-presets");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return DEFAULT_PRESETS;
+  });
+  const [showManagePresets, setShowManagePresets] = useState(false);
+  const [editingPreset, setEditingPreset] = useState(null);
+  const [presetName, setPresetName] = useState("");
+  const [presetGame, setPresetGame] = useState("");
+  const [presetVariant, setPresetVariant] = useState("Cash Game");
+  const [presetLocation, setPresetLocation] = useState("");
+  const [presetType, setPresetType] = useState("Casino");
+  const [presetSmallBlind, setPresetSmallBlind] = useState("");
+  const [presetBigBlind, setPresetBigBlind] = useState("");
+
+  const savePresets = (updated) => {
+    setPresets(updated);
+    localStorage.setItem("poker-loans-session-presets", JSON.stringify(updated));
+  };
+
+  const applyPreset = (preset) => {
+    setNewGame(preset.game || "Dealers Choice");
+    setNewVariant(preset.variant || "Cash Game");
+    setNewLocation(preset.location || "");
+    setNewSessionType(preset.type || "Casino");
+    setNewSmallBlind(preset.smallBlind || "");
+    setNewBigBlind(preset.bigBlind || "");
+  };
+
+  const startEditPreset = (preset, index) => {
+    setEditingPreset(index);
+    setPresetName(preset.name);
+    setPresetGame(preset.game);
+    setPresetVariant(preset.variant);
+    setPresetLocation(preset.location);
+    setPresetType(preset.type);
+    setPresetSmallBlind(preset.smallBlind);
+    setPresetBigBlind(preset.bigBlind);
+  };
+
+  const saveEditedPreset = () => {
+    if (!presetName.trim()) return;
+    const updated = [...presets];
+    const preset = { name: presetName.trim(), game: presetGame, variant: presetVariant, location: presetLocation, type: presetType, smallBlind: presetSmallBlind, bigBlind: presetBigBlind };
+    if (editingPreset !== null && editingPreset < updated.length) {
+      updated[editingPreset] = preset;
+    } else {
+      updated.push(preset);
+    }
+    savePresets(updated);
+    setEditingPreset(null);
+    setPresetName(""); setPresetGame(""); setPresetVariant("Cash Game"); setPresetLocation(""); setPresetType("Casino"); setPresetSmallBlind(""); setPresetBigBlind("");
+  };
+
+  const deletePreset = (index) => {
+    const updated = presets.filter((_, i) => i !== index);
+    savePresets(updated);
+  };
+
   // Import
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState("");
@@ -764,7 +834,25 @@ export default function BankrollTracker({ session, onBack }) {
       {view === "add" && (
         <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
           <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#888", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back</button>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Add Session</h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Add Session</h2>
+            <button onClick={() => setShowManagePresets(true)} style={{ background: "none", border: "none", color: "#666", fontSize: 12, cursor: "pointer" }}>⚙ Edit Presets</button>
+          </div>
+
+          {/* Preset buttons */}
+          {presets.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {presets.map((preset, i) => (
+                <button key={i} onClick={() => applyPreset(preset)} style={{
+                  padding: "8px 14px", background: "#2a2a2a", border: "1px solid #444", borderRadius: 20,
+                  color: "#FFB800", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                  whiteSpace: "nowrap", transition: "all 0.15s",
+                }}>
+                  {preset.name}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div><label style={labelStyle}>Date</label><input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} style={inputStyle} /></div>
 
@@ -905,6 +993,109 @@ export default function BankrollTracker({ session, onBack }) {
             <button onClick={() => handleDelete(deleteConfirm.id)} style={{ padding: "12px", background: "#e53935", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Delete Session</button>
           </div>
         )}
+      </Modal>
+
+      {/* ==================== MANAGE PRESETS MODAL ==================== */}
+      <Modal isOpen={showManagePresets} onClose={() => { setShowManagePresets(false); setEditingPreset(null); }} title="Session Presets">
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ fontSize: 13, color: "#888" }}>Quick-fill buttons for the Add Session form. Tap a preset to edit it.</div>
+
+          {presets.map((preset, i) => (
+            <div key={i} style={{ background: editingPreset === i ? "#2a2a1a" : "#222", borderRadius: 10, padding: "12px 14px", border: editingPreset === i ? "1px solid #FFB800" : "1px solid #333" }}>
+              {editingPreset === i ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div><label style={labelStyle}>Preset Name</label><input type="text" value={presetName} onChange={(e) => setPresetName(e.target.value)} style={inputStyle} placeholder="e.g. Sortis Omaha" /></div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ flex: 1 }}><label style={labelStyle}>Game</label>
+                      <select value={presetGame} onChange={(e) => setPresetGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                        <option value="">Select...</option>
+                        {allGames.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}><label style={labelStyle}>Variant</label>
+                      <select value={presetVariant} onChange={(e) => setPresetVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                        {allVariants.map(v => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ flex: 1 }}><label style={labelStyle}>Location</label>
+                      <select value={presetLocation} onChange={(e) => setPresetLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                        <option value="">Select...</option>
+                        {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}><label style={labelStyle}>Type</label>
+                      <select value={presetType} onChange={(e) => setPresetType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                        {allTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ flex: 1 }}><label style={labelStyle}>Small Blind</label><input type="number" value={presetSmallBlind} onChange={(e) => setPresetSmallBlind(e.target.value)} style={inputStyle} placeholder="0" /></div>
+                    <div style={{ flex: 1 }}><label style={labelStyle}>Big Blind</label><input type="number" value={presetBigBlind} onChange={(e) => setPresetBigBlind(e.target.value)} style={inputStyle} placeholder="0" /></div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={saveEditedPreset} style={{ flex: 1, padding: "10px", background: "#43A047", border: "none", borderRadius: 8, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Save</button>
+                    <button onClick={() => setEditingPreset(null)} style={{ flex: 1, padding: "10px", background: "#333", border: "none", borderRadius: 8, color: "#999", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div onClick={() => startEditPreset(preset, i)} style={{ cursor: "pointer", flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "#FFB800" }}>{preset.name}</div>
+                    <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{preset.game} • {preset.location} • {preset.smallBlind}/{preset.bigBlind}</div>
+                  </div>
+                  <button onClick={() => deletePreset(i)} style={{ background: "none", border: "none", color: "#555", fontSize: 16, cursor: "pointer", padding: "4px 8px" }}>×</button>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Add new preset */}
+          {editingPreset === "new" ? (
+            <div style={{ background: "#2a2a1a", borderRadius: 10, padding: "12px 14px", border: "1px solid #FFB800", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div><label style={labelStyle}>Preset Name</label><input type="text" value={presetName} onChange={(e) => setPresetName(e.target.value)} style={inputStyle} placeholder="e.g. Sortis Omaha" autoFocus /></div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ flex: 1 }}><label style={labelStyle}>Game</label>
+                  <select value={presetGame} onChange={(e) => setPresetGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                    <option value="">Select...</option>
+                    {allGames.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}><label style={labelStyle}>Variant</label>
+                  <select value={presetVariant} onChange={(e) => setPresetVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                    {allVariants.map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ flex: 1 }}><label style={labelStyle}>Location</label>
+                  <select value={presetLocation} onChange={(e) => setPresetLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                    <option value="">Select...</option>
+                    {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}><label style={labelStyle}>Type</label>
+                  <select value={presetType} onChange={(e) => setPresetType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                    {allTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ flex: 1 }}><label style={labelStyle}>Small Blind</label><input type="number" value={presetSmallBlind} onChange={(e) => setPresetSmallBlind(e.target.value)} style={inputStyle} placeholder="0" /></div>
+                <div style={{ flex: 1 }}><label style={labelStyle}>Big Blind</label><input type="number" value={presetBigBlind} onChange={(e) => setPresetBigBlind(e.target.value)} style={inputStyle} placeholder="0" /></div>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={() => { saveEditedPreset(); }} style={{ flex: 1, padding: "10px", background: "#43A047", border: "none", borderRadius: 8, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Add Preset</button>
+                <button onClick={() => { setEditingPreset(null); setPresetName(""); }} style={{ flex: 1, padding: "10px", background: "#333", border: "none", borderRadius: 8, color: "#999", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => { setEditingPreset("new"); setPresetName(""); setPresetGame(""); setPresetVariant("Cash Game"); setPresetLocation(""); setPresetType("Casino"); setPresetSmallBlind(""); setPresetBigBlind(""); }}
+              style={{ padding: "12px", background: "#2a2a2a", border: "1px dashed #444", borderRadius: 10, color: "#888", fontWeight: 600, cursor: "pointer", fontSize: 13 }}>+ Add New Preset</button>
+          )}
+        </div>
       </Modal>
 
       {/* FAB for adding session */}
