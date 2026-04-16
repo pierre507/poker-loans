@@ -80,7 +80,7 @@ const getLoanColor = (index, total) => {
 };
 
 // ==================== SWIPEABLE ROW ====================
-const SwipeableRow = ({ children, onSwipeAction, personId }) => {
+const SwipeableRow = ({ children, onSwipeAction, personId, isDebt }) => {
   const startX = useRef(0);
   const currentX = useRef(0);
   const swiping = useRef(false);
@@ -114,7 +114,7 @@ const SwipeableRow = ({ children, onSwipeAction, personId }) => {
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); closeActions(); setTimeout(() => onSwipeAction("collect"), 50); }}
           style={{ flex: 1, background: "#00C853", border: "none", color: "#000", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "0 4px", touchAction: "manipulation" }}>
-          Collect
+          {isDebt ? "Pay" : "Collect"}
         </button>
         <button
           onPointerDown={(e) => e.stopPropagation()}
@@ -210,13 +210,34 @@ export default function PokerLoans({ session }) {
   const [addMoreInlineAmount, setAddMoreInlineAmount] = useState("");
   const [addMoreInlineNote, setAddMoreInlineNote] = useState("");
 
+  // Load cached rates from localStorage on mount
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem("poker-loans-cached-rates");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === "object") {
+          setUsdRates((prev) => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch (e) {}
+  }, []);
+
   // Fetch live crypto prices from CoinGecko + fiat rates from exchangerate-api
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const newRates = { USD: 1 };
+        // Start with cached rates so we never lose data
+        let cachedRates = {};
+        try {
+          const cached = localStorage.getItem("poker-loans-cached-rates");
+          if (cached) cachedRates = JSON.parse(cached) || {};
+        } catch (e) {}
+
+        const newRates = { USD: 1, ...cachedRates };
 
         // 1. Fetch live fiat rates
+        let fiatSuccess = false;
         try {
           const fiatRes = await fetch("https://open.er-api.com/v6/latest/USD");
           if (fiatRes.ok) {
@@ -225,10 +246,14 @@ export default function PokerLoans({ session }) {
               Object.entries(fiatData.rates).forEach(([code, rate]) => {
                 if (rate > 0) newRates[code] = 1 / rate;
               });
+              fiatSuccess = true;
             }
           }
         } catch (e) {
-          Object.assign(newRates, FIAT_TO_USD);
+          // Keep cached/fallback fiat rates
+          Object.keys(FIAT_TO_USD).forEach((code) => {
+            if (!newRates[code]) newRates[code] = FIAT_TO_USD[code];
+          });
         }
 
         // 2. Build sets of known crypto and fiat codes
@@ -236,9 +261,8 @@ export default function PokerLoans({ session }) {
         const customFiatCodes = new Set();
         customCurrencies.forEach((c) => {
           if (c.isFiat) customFiatCodes.add(c.code.toUpperCase());
-          else knownCryptoCodes.add(c.code.toUpperCase()); // custom crypto
+          else knownCryptoCodes.add(c.code.toUpperCase());
         });
-        // Built-in crypto codes
         CURRENCIES.forEach((c) => {
           if (!FIAT_TO_USD[c.code]) knownCryptoCodes.add(c.code);
         });
@@ -253,17 +277,14 @@ export default function PokerLoans({ session }) {
         allCodes.forEach((code) => {
           const upper = code.toUpperCase();
           if (upper === "USD") return;
-          if (customFiatCodes.has(upper)) return; // user explicitly marked as fiat
-          // If it's a known crypto, always look it up (even if fiat API returned a rate for same code)
+          if (customFiatCodes.has(upper)) return;
           if (knownCryptoCodes.has(upper)) {
             const geckoId = COINGECKO_IDS[upper] || code.toLowerCase();
             geckoIds.push(geckoId);
             codeToGeckoId[upper] = geckoId;
             return;
           }
-          // For unknown codes, skip if fiat API already has a rate
           if (newRates[upper]) return;
-          // Otherwise try CoinGecko as fallback
           const geckoId = code.toLowerCase();
           geckoIds.push(geckoId);
           codeToGeckoId[upper] = geckoId;
@@ -280,10 +301,17 @@ export default function PokerLoans({ session }) {
                 }
               });
             }
+            // If CoinGecko fails, cached rates are already in newRates
           } catch (e) {
             console.error("CoinGecko fetch error:", e);
+            // Cached rates already present — no data loss
           }
         }
+
+        // Save to localStorage for next time
+        try {
+          localStorage.setItem("poker-loans-cached-rates", JSON.stringify(newRates));
+        } catch (e) {}
 
         setUsdRates(newRates);
       } catch (e) {
@@ -678,7 +706,7 @@ export default function PokerLoans({ session }) {
               const bgColor = activeTab === "debts" ? getDebtColor(groupIndex, groupedList.length) : getLoanColor(groupIndex, groupedList.length);
               const curr = person.currency || "USD";
               return (
-                <SwipeableRow key={person.id} personId={person.id} onSwipeAction={(action) => {
+                <SwipeableRow key={person.id} personId={person.id} isDebt={activeTab === "debts"} onSwipeAction={(action) => {
                   if (action === "collect") { setCollectAmount(String(Number(person.balance))); setShowCollectModal(person); }
                   else if (action === "delete") setShowDeleteConfirm(person);
                 }}>
@@ -726,7 +754,7 @@ export default function PokerLoans({ session }) {
                       const curr = person.currency || "USD";
                       const interest = calculateInterest(Number(person.balance), Number(person.interest_rate), person.created_at);
                       return (
-                        <SwipeableRow key={person.id} personId={person.id} onSwipeAction={(action) => {
+                        <SwipeableRow key={person.id} personId={person.id} isDebt={activeTab === "debts"} onSwipeAction={(action) => {
                           if (action === "collect") { setCollectAmount(String(Number(person.balance))); setShowCollectModal(person); }
                           else if (action === "delete") setShowDeleteConfirm(person);
                         }}>
@@ -784,7 +812,7 @@ export default function PokerLoans({ session }) {
       </Modal>
 
       {/* ==================== COLLECT MODAL ==================== */}
-      <Modal isOpen={!!showCollectModal} onClose={() => { setShowCollectModal(null); setCollectAmount(""); setCollectNote(""); }} title={`Collect from ${showCollectModal?.name || ""}`}>
+      <Modal isOpen={!!showCollectModal} onClose={() => { setShowCollectModal(null); setCollectAmount(""); setCollectNote(""); }} title={showCollectModal?.type === "debt" ? `Pay ${showCollectModal?.name || ""}` : `Collect from ${showCollectModal?.name || ""}`}>
         {showCollectModal && (() => {
           const curr = showCollectModal.currency || "USD";
           const fullBalance = Number(showCollectModal.balance);
@@ -795,7 +823,7 @@ export default function PokerLoans({ session }) {
                 <div style={{ fontSize: 28, fontWeight: 800, fontFamily: "'Space Mono', monospace", color: showCollectModal.type === "debt" ? "#e53935" : "#43A047" }}>{formatAmountWithConfig(fullBalance, curr)}</div>
               </div>
               <div>
-                <label style={labelStyle}>Amount to Collect ({getAllCurrencyConfig(curr).symbol})</label>
+                <label style={labelStyle}>Amount to {showCollectModal.type === "debt" ? "Pay" : "Collect"} ({getAllCurrencyConfig(curr).symbol})</label>
                 <input type="number" value={collectAmount} onChange={(e) => setCollectAmount(e.target.value)} style={inputStyle} min="0" step="any" autoFocus />
                 {collectAmount && parseFloat(collectAmount) > fullBalance && (
                   <div style={{ fontSize: 12, color: "#FFB800", marginTop: 6, padding: "8px 12px", background: "rgba(255,184,0,0.1)", borderRadius: 8 }}>
@@ -804,14 +832,14 @@ export default function PokerLoans({ session }) {
                 )}
                 {collectAmount && parseFloat(collectAmount) < fullBalance && parseFloat(collectAmount) > 0 && (
                   <div style={{ fontSize: 12, color: "#8888aa", marginTop: 6 }}>
-                    Remaining after collection: {formatAmountWithConfig(fullBalance - parseFloat(collectAmount), curr)}
+                    Remaining after {showCollectModal.type === "debt" ? "payment" : "collection"}: {formatAmountWithConfig(fullBalance - parseFloat(collectAmount), curr)}
                   </div>
                 )}
               </div>
               <div><label style={labelStyle}>Note — optional</label><input type="text" placeholder="Payment note..." value={collectNote} onChange={(e) => setCollectNote(e.target.value)} style={inputStyle} /></div>
-              <button onClick={() => { const amount = parseFloat(collectAmount); if (!amount || amount <= 0) return; handleTransaction(showCollectModal, amount, "collect", collectNote || (amount >= fullBalance ? "Full collection" : "Partial collection")); setShowCollectModal(null); setCollectAmount(""); setCollectNote(""); }}
+              <button onClick={() => { const amount = parseFloat(collectAmount); if (!amount || amount <= 0) return; const isDebt = showCollectModal.type === "debt"; handleTransaction(showCollectModal, amount, "collect", collectNote || (amount >= fullBalance ? (isDebt ? "Full payment" : "Full collection") : (isDebt ? "Partial payment" : "Partial collection"))); setShowCollectModal(null); setCollectAmount(""); setCollectNote(""); }}
                 style={{ padding: "14px", background: "#00C853", border: "none", borderRadius: 12, color: "#000", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
-                ✓ Collect {collectAmount ? formatAmountWithConfig(parseFloat(collectAmount) || 0, curr) : formatAmountWithConfig(fullBalance, curr)}
+                ✓ {showCollectModal.type === "debt" ? "Pay" : "Collect"} {collectAmount ? formatAmountWithConfig(parseFloat(collectAmount) || 0, curr) : formatAmountWithConfig(fullBalance, curr)}
               </button>
             </div>
           );
@@ -850,7 +878,7 @@ export default function PokerLoans({ session }) {
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ background: showPersonDetail.type === "debt" ? "linear-gradient(135deg, #e53935, #b71c1c)" : "linear-gradient(135deg, #43A047, #2E7D32)", borderRadius: 14, padding: 20, textAlign: "center" }}>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>{showPersonDetail.type === "debt" ? "They are owed" : "They owe you"}</div>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1 }}>{showPersonDetail.type === "debt" ? "You owe them" : "They owe you"}</div>
                 <div style={{ fontSize: 34, fontWeight: 800, fontFamily: "'Space Mono', monospace" }}>{formatAmountWithConfig(Number(showPersonDetail.balance), curr)}</div>
                 {curr !== "USD" && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 4 }}>{curr}</div>}
                 {Number(showPersonDetail.interest_rate) > 0 && (
@@ -876,7 +904,7 @@ export default function PokerLoans({ session }) {
                     <div key={t.id} style={{ background: "#222", borderRadius: 8, padding: "10px 12px", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>
                         <div style={{ fontSize: 13, color: "#ccc", fontWeight: 600 }}>
-                          {t.type === "created" && "Created"}{t.type === "partial_collect" && "Partial Collection"}{t.type === "completed" && "✓ Completed"}{t.type === "flipped" && "⇄ Flipped"}{t.type === "added" && "Added More"}
+                          {t.type === "created" && "Created"}{t.type === "partial_collect" && (t.entry_type === "debt" ? "Partial Payment" : "Partial Collection")}{t.type === "completed" && "✓ Completed"}{t.type === "flipped" && "⇄ Flipped"}{t.type === "added" && "Added More"}
                         </div>
                         {t.note && <div style={{ fontSize: 11, color: "#777", marginTop: 2 }}>{t.note}</div>}
                         <div style={{ fontSize: 11, color: "#555", marginTop: 2 }}>{formatDateTime(t.created_at)}</div>
@@ -892,7 +920,7 @@ export default function PokerLoans({ session }) {
                 )}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => { setShowPersonDetail(null); setShowCollectModal(showPersonDetail); setCollectAmount(String(Number(showPersonDetail.balance))); }} style={{ flex: 1, padding: "12px", background: "#00C853", border: "none", borderRadius: 10, color: "#000", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Collect</button>
+                <button onClick={() => { setShowPersonDetail(null); setShowCollectModal(showPersonDetail); setCollectAmount(String(Number(showPersonDetail.balance))); }} style={{ flex: 1, padding: "12px", background: "#00C853", border: "none", borderRadius: 10, color: "#000", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>{showPersonDetail.type === "debt" ? "Pay" : "Collect"}</button>
                 <button onClick={() => setShowAddMoreInline(showAddMoreInline === showPersonDetail.id ? null : showPersonDetail.id)} style={{ flex: 1, padding: "12px", background: "#2196F3", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Add More</button>
               </div>
               {showAddMoreInline === showPersonDetail.id && (
@@ -971,7 +999,7 @@ export default function PokerLoans({ session }) {
                             <div key={t.id} style={{ padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1f1f1f" }}>
                               <div>
                                 <div style={{ fontSize: 12, color: "#ccc", fontWeight: 600 }}>
-                                  {t.type === "created" && "Created"}{t.type === "partial_collect" && "Partial Collection"}{t.type === "completed" && "✓ Completed"}{t.type === "flipped" && "⇄ Flipped"}{t.type === "added" && "Added More"}
+                                  {t.type === "created" && "Created"}{t.type === "partial_collect" && (t.entry_type === "debt" ? "Partial Payment" : "Partial Collection")}{t.type === "completed" && "✓ Completed"}{t.type === "flipped" && "⇄ Flipped"}{t.type === "added" && "Added More"}
                                 </div>
                                 {t.note && <div style={{ fontSize: 10, color: "#777", marginTop: 1 }}>{t.note}</div>}
                                 <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>{formatDateTime(t.created_at)}</div>
@@ -990,7 +1018,7 @@ export default function PokerLoans({ session }) {
                           return (
                             <div key={r.id} style={{ padding: "8px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #1f1f1f", background: "rgba(0,200,83,0.03)" }}>
                               <div>
-                                <div style={{ fontSize: 12, color: "#00C853", fontWeight: 600 }}>✓ Fully Collected</div>
+                                <div style={{ fontSize: 12, color: "#00C853", fontWeight: 600 }}>✓ {r.type === "debt" ? "Fully Paid" : "Fully Collected"}</div>
                                 <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>Originally: {r.type} • {formatDate(r.completed_at)}</div>
                               </div>
                               <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Space Mono', monospace", color: "#00C853" }}>
