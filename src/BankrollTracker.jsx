@@ -77,26 +77,51 @@ const MiniBarChart = ({ data, color = "#2e7d32", height = 120 }) => {
 const CumulativeLine = ({ data, height = 140, color = "#2e7d32" }) => {
   if (!data || data.length < 2) return null;
   const w = 360;
-  const pad = 10;
+  const padX = 10;
+  const padTop = 10;
+  const padBottom = 22;
   const vals = data.map(d => d.value);
+  const labels = data.map(d => d.label || "");
   const cumulative = [];
   let sum = 0;
   vals.forEach(v => { sum += v; cumulative.push(sum); });
   const minY = Math.min(0, ...cumulative);
   const maxY = Math.max(...cumulative, 1);
   const rangeY = maxY - minY || 1;
+  const chartH = height - padTop - padBottom;
   const points = cumulative.map((v, i) => {
-    const x = pad + (i / (cumulative.length - 1)) * (w - pad * 2);
-    const y = pad + (1 - (v - minY) / rangeY) * (height - pad * 2);
+    const x = padX + (i / (cumulative.length - 1)) * (w - padX * 2);
+    const y = padTop + (1 - (v - minY) / rangeY) * chartH;
     return `${x},${y}`;
   }).join(" ");
-  const zeroY = pad + (1 - (0 - minY) / rangeY) * (height - pad * 2);
+  const zeroY = padTop + (1 - (0 - minY) / rangeY) * chartH;
+
+  // Find year boundaries for labels
+  const yearLabels = [];
+  if (labels.length > 0 && labels[0]) {
+    let lastYear = "";
+    labels.forEach((label, i) => {
+      const year = label ? label.slice(0, 4) : "";
+      if (year && year !== lastYear) {
+        const x = padX + (i / (cumulative.length - 1)) * (w - padX * 2);
+        yearLabels.push({ x, year });
+        lastYear = year;
+      }
+    });
+  }
+
   return (
     <svg viewBox={`0 0 ${w} ${height}`} style={{ width: "100%", height }}>
-      <line x1={pad} y1={zeroY} x2={w - pad} y2={zeroY} stroke="#333" strokeWidth="1" strokeDasharray="4" />
+      <line x1={padX} y1={zeroY} x2={w - padX} y2={zeroY} stroke="#e8e6e2" strokeWidth="1" strokeDasharray="4" />
       <polyline points={points} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <text x={pad} y={zeroY - 4} fill="#555" fontSize="10">$0</text>
-      <text x={w - pad} y={pad + 12} fill={color} fontSize="10" textAnchor="end">{formatCurrency(cumulative[cumulative.length - 1])}</text>
+      <text x={padX} y={zeroY - 4} fill="#bbb" fontSize="10">$0</text>
+      <text x={w - padX} y={padTop + 12} fill={color} fontSize="10" textAnchor="end">{formatCurrency(cumulative[cumulative.length - 1])}</text>
+      {yearLabels.map((yl, i) => (
+        <g key={i}>
+          <line x1={yl.x} y1={padTop} x2={yl.x} y2={height - padBottom} stroke="#e8e6e2" strokeWidth="0.5" />
+          <text x={yl.x} y={height - 6} fill="#bbb" fontSize="9" textAnchor="middle">{yl.year}</text>
+        </g>
+      ))}
     </svg>
   );
 };
@@ -528,29 +553,29 @@ export default function BankrollTracker({ session, onLoans }) {
 
               {/* This Month / This Year */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div style={{ ...cardStyle, cursor: "default" }}>
+                <div onClick={() => setView("month-sessions")} style={{ ...cardStyle }}>
                   <div style={statLabel}>This Month</div>
-                  <div style={{ fontSize: 18, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: monthProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>
+                  <div style={{ fontSize: 18, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: monthProfit >= 0 ? "#2e7d32" : "#c62828", marginTop: 4 }}>
                     {monthProfit >= 0 ? "+" : "-"}{formatCurrencyFull(monthProfit)}
                   </div>
                   <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>{monthSessions.length} sessions • {formatHoursFull(monthMinutes)}hrs</div>
                   <div style={{ borderTop: "1px solid #e8e6e2", marginTop: 8, paddingTop: 8 }}>
                     <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5 }}>{lastMonthName}</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: lastMonthProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 2 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: lastMonthProfit >= 0 ? "#2e7d32" : "#c62828", marginTop: 2 }}>
                       {lastMonthProfit >= 0 ? "+" : "-"}{formatCurrencyFull(lastMonthProfit)}
                     </div>
                     <div style={{ fontSize: 10, color: "#ccc", marginTop: 1 }}>{lastMonthSessions.length} sessions • {formatHoursFull(lastMonthMinutes)}hrs</div>
                   </div>
                 </div>
-                <div style={{ ...cardStyle, cursor: "default" }}>
+                <div onClick={() => setView("year-sessions")} style={{ ...cardStyle }}>
                   <div style={statLabel}>This Year</div>
-                  <div style={{ fontSize: 18, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: yearProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 4 }}>
+                  <div style={{ fontSize: 18, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: yearProfit >= 0 ? "#2e7d32" : "#c62828", marginTop: 4 }}>
                     {yearProfit >= 0 ? "+" : "-"}{formatCurrencyFull(yearProfit)}
                   </div>
                   <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>{yearSessions.length} sessions • {formatHoursFull(yearMinutes)}hrs</div>
                   <div style={{ borderTop: "1px solid #e8e6e2", marginTop: 8, paddingTop: 8 }}>
                     <div style={{ fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 0.5 }}>{lastYear}</div>
-                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: lastYearProfit >= 0 ? "#00E676" : "#FF5252", marginTop: 2 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: lastYearProfit >= 0 ? "#2e7d32" : "#c62828", marginTop: 2 }}>
                       {lastYearProfit >= 0 ? "+" : "-"}{formatCurrencyFull(lastYearProfit)}
                     </div>
                     <div style={{ fontSize: 10, color: "#ccc", marginTop: 1 }}>{lastYearSessions.length} sessions • {formatHoursFull(lastYearMinutes)}hrs</div>
@@ -561,7 +586,7 @@ export default function BankrollTracker({ session, onLoans }) {
               {/* Cumulative Profit Chart */}
               <div style={{ ...cardStyle, cursor: "default", padding: "12px" }}>
                 <div style={{ ...statLabel, marginBottom: 8, paddingLeft: 6 }}>Cumulative Profit</div>
-                <CumulativeLine data={[...sessions].reverse().map(s => ({ value: Number(s.net_profit || 0) }))} />
+                <CumulativeLine data={[...sessions].reverse().map(s => ({ value: Number(s.net_profit || 0), label: s.start_time?.slice(0, 10) || "" }))} />
               </div>
 
               {/* Top Games */}
@@ -621,7 +646,7 @@ export default function BankrollTracker({ session, onLoans }) {
               <div style={{ ...cardStyle, cursor: "default" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                   <div style={statLabel}>By Year</div>
-                  <button onClick={() => setView("profit")} style={{ background: "none", border: "none", color: "#b8860b", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>View All →</button>
+                  <button onClick={() => setView("years")} style={{ background: "none", border: "none", color: "#b8860b", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>View All →</button>
                 </div>
                 {yearlyData.reverse().slice(0, 5).map(([year, d]) => (
                   <div key={year} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2" }}>
@@ -720,7 +745,7 @@ export default function BankrollTracker({ session, onLoans }) {
 
           <div style={{ ...cardStyle, cursor: "default", padding: "12px" }}>
             <div style={{ ...statLabel, marginBottom: 8, paddingLeft: 6 }}>Cumulative Profit</div>
-            <CumulativeLine data={[...sessions].reverse().map(s => ({ value: Number(s.net_profit || 0) }))} height={160} />
+            <CumulativeLine data={[...sessions].reverse().map(s => ({ value: Number(s.net_profit || 0), label: s.start_time?.slice(0, 10) || "" }))} height={160} />
           </div>
 
           <div style={{ ...cardStyle, cursor: "default" }}>
@@ -799,7 +824,7 @@ export default function BankrollTracker({ session, onLoans }) {
 
             <div style={{ ...cardStyle, cursor: "default", padding: "12px" }}>
               <div style={{ ...statLabel, marginBottom: 8, paddingLeft: 6 }}>Profit Over Time</div>
-              <CumulativeLine data={[...detailSessions].reverse().map(s => ({ value: Number(s.net_profit || 0) }))} />
+              <CumulativeLine data={[...detailSessions].reverse().map(s => ({ value: Number(s.net_profit || 0), label: s.start_time?.slice(0, 10) || "" }))} />
             </div>
 
             <div style={{ ...cardStyle, cursor: "default" }}>
@@ -989,7 +1014,7 @@ export default function BankrollTracker({ session, onLoans }) {
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>Import Data</h2>
           <div style={{ color: "#999", fontSize: 14 }}>Upload your cleaned Poker Bankroll Tracker CSV export. This will add all sessions to your account.</div>
 
-          <input type="file" accept=".csv" ref={fileInputRef} onChange={handleImport} style={{ display: "none" }} />
+          <input type="file" accept=".csv,text/csv,text/comma-separated-values,application/csv" ref={fileInputRef} onChange={handleImport} style={{ display: "none" }} />
           <button onClick={() => fileInputRef.current?.click()} disabled={importing}
             style={{ padding: "16px", background: importing ? "#333" : "#FFB800", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 500, cursor: importing ? "not-allowed" : "pointer", fontFamily: "'DM Sans', sans-serif" }}>
             {importing ? "Importing..." : "📤 Select CSV File"}
@@ -1024,6 +1049,102 @@ export default function BankrollTracker({ session, onLoans }) {
           </div>
         )}
       </Modal>
+
+      {/* ==================== ALL YEARS VIEW ==================== */}
+      {view === "years" && (
+        <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
+          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>All Years</h2>
+          <div style={{ ...cardStyle, cursor: "default", padding: "12px" }}>
+            <CumulativeLine data={[...sessions].reverse().map(s => ({ value: Number(s.net_profit || 0), label: s.start_time?.slice(0, 10) || "" }))} height={160} />
+          </div>
+          {yearlyData.reverse().map(([year, d]) => {
+            const hr = d.minutes > 0 ? d.profit / (d.minutes / 60) : 0;
+            return (
+              <div key={year} style={{ ...cardStyle, cursor: "default", padding: "14px 18px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 500, color: "#1a1a1a" }}>{year}</div>
+                    <div style={{ fontSize: 11, color: "#bbb", marginTop: 2 }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs • {formatCurrencyFull(hr)}/hr</div>
+                  </div>
+                  <div style={{ fontSize: 17, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: d.profit >= 0 ? "#2e7d32" : "#c62828" }}>
+                    {d.profit >= 0 ? "+" : "-"}{formatCurrencyFull(d.profit)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ==================== THIS MONTH SESSIONS ==================== */}
+      {view === "month-sessions" && (
+        <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>This Month</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ ...cardStyle, cursor: "default" }}>
+              <div style={statLabel}>Profit</div>
+              <div style={{ fontSize: 20, fontWeight: 500, color: monthProfit >= 0 ? "#2e7d32" : "#c62828", marginTop: 4 }}>{monthProfit >= 0 ? "+" : "-"}{formatCurrencyFull(monthProfit)}</div>
+            </div>
+            <div style={{ ...cardStyle, cursor: "default" }}>
+              <div style={statLabel}>Sessions</div>
+              <div style={{ fontSize: 20, fontWeight: 500, color: "#1a1a1a", marginTop: 4 }}>{monthSessions.length}</div>
+              <div style={{ fontSize: 10, color: "#bbb" }}>{formatHoursFull(monthMinutes)}hrs</div>
+            </div>
+          </div>
+          {monthSessions.length === 0 ? (
+            <div style={{ color: "#bbb", textAlign: "center", padding: 30 }}>No sessions this month</div>
+          ) : monthSessions.map((s) => (
+            <div key={s.id} style={{ background: "#fff", borderRadius: 14, padding: "14px 16px", border: "1px solid #e8e6e2", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: "#333" }}>{s.game || "Unknown"}</div>
+                <div style={{ fontSize: 11, color: "#bbb" }}>{formatDate(s.start_time)} • {s.location} • {formatHoursFull(s.playing_minutes)}hrs</div>
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 500, color: Number(s.net_profit) >= 0 ? "#2e7d32" : "#c62828" }}>
+                {Number(s.net_profit) >= 0 ? "+" : ""}{formatCurrencyFull(s.net_profit)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ==================== THIS YEAR SESSIONS ==================== */}
+      {view === "year-sessions" && (
+        <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+          <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>This Year ({thisYear})</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ ...cardStyle, cursor: "default" }}>
+              <div style={statLabel}>Profit</div>
+              <div style={{ fontSize: 20, fontWeight: 500, color: yearProfit >= 0 ? "#2e7d32" : "#c62828", marginTop: 4 }}>{yearProfit >= 0 ? "+" : "-"}{formatCurrencyFull(yearProfit)}</div>
+            </div>
+            <div style={{ ...cardStyle, cursor: "default" }}>
+              <div style={statLabel}>Sessions</div>
+              <div style={{ fontSize: 20, fontWeight: 500, color: "#1a1a1a", marginTop: 4 }}>{yearSessions.length}</div>
+              <div style={{ fontSize: 10, color: "#bbb" }}>{formatHoursFull(yearMinutes)}hrs</div>
+            </div>
+          </div>
+          <div style={{ ...cardStyle, cursor: "default", padding: "12px" }}>
+            <div style={{ ...statLabel, marginBottom: 8, paddingLeft: 6 }}>Cumulative profit — {thisYear}</div>
+            <CumulativeLine data={[...yearSessions].reverse().map(s => ({ value: Number(s.net_profit || 0), label: s.start_time?.slice(0, 10) || "" }))} />
+          </div>
+          {yearSessions.length === 0 ? (
+            <div style={{ color: "#bbb", textAlign: "center", padding: 30 }}>No sessions this year</div>
+          ) : yearSessions.slice(0, 50).map((s) => (
+            <div key={s.id} style={{ background: "#fff", borderRadius: 14, padding: "14px 16px", border: "1px solid #e8e6e2", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: "#333" }}>{s.game || "Unknown"}</div>
+                <div style={{ fontSize: 11, color: "#bbb" }}>{formatDate(s.start_time)} • {s.location} • {formatHoursFull(s.playing_minutes)}hrs</div>
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 500, color: Number(s.net_profit) >= 0 ? "#2e7d32" : "#c62828" }}>
+                {Number(s.net_profit) >= 0 ? "+" : ""}{formatCurrencyFull(s.net_profit)}
+              </div>
+            </div>
+          ))}
+          {yearSessions.length > 50 && <div style={{ fontSize: 12, color: "#bbb", textAlign: "center" }}>Showing 50 of {yearSessions.length}</div>}
+        </div>
+      )}
 
       {/* ==================== MANAGE PRESETS MODAL ==================== */}
       <Modal isOpen={showManagePresets} onClose={() => { setShowManagePresets(false); setEditingPreset(null); }} title="Session Presets">
