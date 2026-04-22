@@ -179,6 +179,7 @@ export default function BankrollTracker({ session, onLoans }) {
     return DEFAULT_PRESETS;
   });
   const [showManagePresets, setShowManagePresets] = useState(false);
+  const [showManageCustom, setShowManageCustom] = useState(false);
   const [editingPreset, setEditingPreset] = useState(null);
   const [presetName, setPresetName] = useState("");
   const [presetGame, setPresetGame] = useState("");
@@ -252,10 +253,20 @@ export default function BankrollTracker({ session, onLoans }) {
     return { games: [], locations: [], variants: [], types: [] };
   });
   const addCustomValue = (category, value) => {
-    if (!value || customAddedValues[category]?.includes(value)) return;
-    const updated = { ...customAddedValues, [category]: [...(customAddedValues[category] || []), value] };
-    setCustomAddedValues(updated);
-    localStorage.setItem("poker-loans-custom-values", JSON.stringify(updated));
+    if (!value) return;
+    setCustomAddedValues(prev => {
+      if (prev[category]?.includes(value)) return prev;
+      const updated = { ...prev, [category]: [...(prev[category] || []), value] };
+      localStorage.setItem("poker-loans-custom-values", JSON.stringify(updated));
+      return updated;
+    });
+  };
+  const removeCustomValue = (category, value) => {
+    setCustomAddedValues(prev => {
+      const updated = { ...prev, [category]: (prev[category] || []).filter(v => v !== value) };
+      localStorage.setItem("poker-loans-custom-values", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   // Filters
@@ -923,7 +934,10 @@ export default function BankrollTracker({ session, onLoans }) {
           <button onClick={() => setView("dashboard")} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back</button>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>Add Session</h2>
-            <button onClick={() => setShowManagePresets(true)} style={{ background: "none", border: "none", color: "#aaa", fontSize: 12, cursor: "pointer" }}>⚙ Edit Presets</button>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={() => setShowManageCustom(true)} style={{ background: "none", border: "none", color: "#aaa", fontSize: 12, cursor: "pointer" }}>✎ Fields</button>
+              <button onClick={() => setShowManagePresets(true)} style={{ background: "none", border: "none", color: "#aaa", fontSize: 12, cursor: "pointer" }}>⚙ Presets</button>
+            </div>
           </div>
 
           {/* Preset buttons */}
@@ -954,7 +968,7 @@ export default function BankrollTracker({ session, onLoans }) {
                 </div>
               ) : (
                 <select value={allGames.includes(newGame) ? newGame : "__show_custom__"} onChange={(e) => setNewGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                  {!allGames.includes(newGame) && newGame && newGame !== "__custom__" && <option value="__show_custom__">{newGame} (custom)</option>}
+                  {!allGames.includes(newGame) && newGame && newGame !== "__custom__" && <option value="__show_custom__">{newGame}</option>}
                   {allGames.map(g => <option key={g} value={g}>{g}</option>)}
                   <option value="__custom__">+ Add new game...</option>
                 </select>
@@ -988,7 +1002,7 @@ export default function BankrollTracker({ session, onLoans }) {
             ) : (
               <select value={allLocations.includes(newLocation) ? newLocation : (newLocation ? "__show_custom__" : "")} onChange={(e) => setNewLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
                 <option value="">Select location...</option>
-                {!allLocations.includes(newLocation) && newLocation && newLocation !== "__custom__" && <option value="__show_custom__">{newLocation} (custom)</option>}
+                {!allLocations.includes(newLocation) && newLocation && newLocation !== "__custom__" && <option value="__show_custom__">{newLocation}</option>}
                 {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
                 <option value="__custom__">+ Add new location...</option>
               </select>
@@ -1303,6 +1317,36 @@ export default function BankrollTracker({ session, onLoans }) {
           {yearSessions.length > 50 && <div style={{ fontSize: 12, color: "#bbb", textAlign: "center" }}>Showing 50 of {yearSessions.length}</div>}
         </div>
       )}
+
+      {/* ==================== MANAGE CUSTOM FIELDS MODAL ==================== */}
+      <Modal isOpen={showManageCustom} onClose={() => setShowManageCustom(false)} title="Custom Fields">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ fontSize: 13, color: "#999" }}>Custom values you've added. Tap × to remove. Values from your session history can't be removed here.</div>
+          {[
+            { label: "Games", category: "games", items: customAddedValues.games || [] },
+            { label: "Locations", category: "locations", items: customAddedValues.locations || [] },
+            { label: "Variants", category: "variants", items: customAddedValues.variants || [] },
+            { label: "Types", category: "types", items: customAddedValues.types || [] },
+          ].map(({ label, category, items }) => (
+            items.length > 0 && (
+              <div key={category}>
+                <div style={labelStyle}>{label}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {items.map(item => (
+                    <span key={item} style={{ background: "#fff", border: "1px solid #e8e6e2", borderRadius: 20, padding: "6px 12px", fontSize: 13, color: "#333", display: "flex", alignItems: "center", gap: 6 }}>
+                      {item}
+                      <button onClick={() => removeCustomValue(category, item)} style={{ background: "none", border: "none", color: "#c62828", fontSize: 14, cursor: "pointer", padding: 0, lineHeight: 1 }}>×</button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )
+          ))}
+          {(customAddedValues.games || []).length === 0 && (customAddedValues.locations || []).length === 0 && (customAddedValues.variants || []).length === 0 && (customAddedValues.types || []).length === 0 && (
+            <div style={{ color: "#bbb", textAlign: "center", padding: 20 }}>No custom fields added yet. Use "+ Add new..." in the dropdowns to create them.</div>
+          )}
+        </div>
+      </Modal>
 
       {/* ==================== MANAGE PRESETS MODAL ==================== */}
       <Modal isOpen={showManagePresets} onClose={() => { setShowManagePresets(false); setEditingPreset(null); }} title="Session Presets">
