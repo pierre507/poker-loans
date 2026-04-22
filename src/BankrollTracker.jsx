@@ -243,6 +243,21 @@ export default function BankrollTracker({ session, onLoans }) {
   const [customVariantInput, setCustomVariantInput] = useState("");
   const [customTypeInput, setCustomTypeInput] = useState("");
 
+  // Persistent custom-added values (shared across Add Session and Presets)
+  const [customAddedValues, setCustomAddedValues] = useState(() => {
+    try {
+      const stored = localStorage.getItem("poker-loans-custom-values");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return { games: [], locations: [], variants: [], types: [] };
+  });
+  const addCustomValue = (category, value) => {
+    if (!value || customAddedValues[category]?.includes(value)) return;
+    const updated = { ...customAddedValues, [category]: [...(customAddedValues[category] || []), value] };
+    setCustomAddedValues(updated);
+    localStorage.setItem("poker-loans-custom-values", JSON.stringify(updated));
+  };
+
   // Filters
   const [filterGame, setFilterGame] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
@@ -314,10 +329,10 @@ export default function BankrollTracker({ session, onLoans }) {
   const lastYearMinutes = lastYearSessions.reduce((sum, s) => sum + Number(s.playing_minutes || 0), 0);
 
   // Unique values for filters/forms
-  const allGames = [...new Set(sessions.map(s => s.game).filter(Boolean))].sort();
-  const allLocations = [...new Set(sessions.map(s => s.location).filter(Boolean))].sort();
-  const allVariants = [...new Set(sessions.map(s => s.variant).filter(Boolean))].sort();
-  const allTypes = [...new Set(sessions.map(s => s.session_type).filter(Boolean))].sort();
+  const allGames = [...new Set([...sessions.map(s => s.game).filter(Boolean), ...(customAddedValues.games || [])])].sort();
+  const allLocations = [...new Set([...sessions.map(s => s.location).filter(Boolean), ...(customAddedValues.locations || [])])].sort();
+  const allVariants = [...new Set([...sessions.map(s => s.variant).filter(Boolean), ...(customAddedValues.variants || [])])].sort();
+  const allTypes = [...new Set([...sessions.map(s => s.session_type).filter(Boolean), ...(customAddedValues.types || [])])].sort();
   const allYears = [...new Set(sessions.map(s => s.start_time?.slice(0, 4)).filter(Boolean))].sort().reverse();
 
   // Group by game
@@ -933,8 +948,8 @@ export default function BankrollTracker({ session, onLoans }) {
               <label style={labelStyle}>Game</label>
               {newGame === "__custom__" ? (
                 <div style={{ display: "flex", gap: 6 }}>
-                  <input type="text" placeholder="New game name..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customGameInput.trim()) { setNewGame(customGameInput.trim()); setCustomGameInput(""); }}} style={{ ...inputStyle, flex: 1 }} />
-                  <button onClick={() => { if (customGameInput.trim()) { setNewGame(customGameInput.trim()); } setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <input type="text" placeholder="New game name..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customGameInput.trim()) { addCustomValue("games", customGameInput.trim()); setNewGame(customGameInput.trim()); setCustomGameInput(""); }}} style={{ ...inputStyle, flex: 1 }} />
+                  <button onClick={() => { if (customGameInput.trim()) { addCustomValue("games", customGameInput.trim()); setNewGame(customGameInput.trim()); } setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                   <button onClick={() => { setNewGame("Dealers Choice"); setCustomGameInput(""); }} style={{ background: "#e8e6e2", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✕</button>
                 </div>
               ) : (
@@ -949,8 +964,8 @@ export default function BankrollTracker({ session, onLoans }) {
               <label style={labelStyle}>Variant</label>
               {newVariant === "__custom__" ? (
                 <div style={{ display: "flex", gap: 4 }}>
-                  <input type="text" placeholder="New..." autoFocus value={customVariantInput} onChange={(e) => setCustomVariantInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customVariantInput.trim()) { setNewVariant(customVariantInput.trim()); setCustomVariantInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                  <button onClick={() => { if (customVariantInput.trim()) { setNewVariant(customVariantInput.trim()); } setCustomVariantInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <input type="text" placeholder="New..." autoFocus value={customVariantInput} onChange={(e) => setCustomVariantInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customVariantInput.trim()) { addCustomValue("variants", customVariantInput.trim()); setNewVariant(customVariantInput.trim()); setCustomVariantInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                  <button onClick={() => { if (customVariantInput.trim()) { addCustomValue("variants", customVariantInput.trim()); setNewVariant(customVariantInput.trim()); } setCustomVariantInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                 </div>
               ) : (
                 <select value={allVariants.includes(newVariant) ? newVariant : "__show_custom__"} onChange={(e) => setNewVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -966,8 +981,8 @@ export default function BankrollTracker({ session, onLoans }) {
             <label style={labelStyle}>Location</label>
             {newLocation === "__custom__" ? (
               <div style={{ display: "flex", gap: 6 }}>
-                <input type="text" placeholder="New location name..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customLocationInput.trim()) { setNewLocation(customLocationInput.trim()); setCustomLocationInput(""); }}} style={{ ...inputStyle, flex: 1 }} />
-                <button onClick={() => { if (customLocationInput.trim()) { setNewLocation(customLocationInput.trim()); } setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                <input type="text" placeholder="New location name..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customLocationInput.trim()) { addCustomValue("locations", customLocationInput.trim()); setNewLocation(customLocationInput.trim()); setCustomLocationInput(""); }}} style={{ ...inputStyle, flex: 1 }} />
+                <button onClick={() => { if (customLocationInput.trim()) { addCustomValue("locations", customLocationInput.trim()); setNewLocation(customLocationInput.trim()); } setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                 <button onClick={() => { setNewLocation(""); setCustomLocationInput(""); }} style={{ background: "#e8e6e2", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✕</button>
               </div>
             ) : (
@@ -985,8 +1000,8 @@ export default function BankrollTracker({ session, onLoans }) {
               <label style={labelStyle}>Type</label>
               {newSessionType === "__custom__" ? (
                 <div style={{ display: "flex", gap: 4 }}>
-                  <input type="text" placeholder="New type..." autoFocus value={customTypeInput} onChange={(e) => setCustomTypeInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customTypeInput.trim()) { setNewSessionType(customTypeInput.trim()); setCustomTypeInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                  <button onClick={() => { if (customTypeInput.trim()) { setNewSessionType(customTypeInput.trim()); } setCustomTypeInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <input type="text" placeholder="New type..." autoFocus value={customTypeInput} onChange={(e) => setCustomTypeInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customTypeInput.trim()) { addCustomValue("types", customTypeInput.trim()); setNewSessionType(customTypeInput.trim()); setCustomTypeInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                  <button onClick={() => { if (customTypeInput.trim()) { addCustomValue("types", customTypeInput.trim()); setNewSessionType(customTypeInput.trim()); } setCustomTypeInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                 </div>
               ) : (
                 <select value={allTypes.includes(newSessionType) ? newSessionType : "__show_custom__"} onChange={(e) => setNewSessionType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -1303,8 +1318,8 @@ export default function BankrollTracker({ session, onLoans }) {
                     <div style={{ flex: 1 }}><label style={labelStyle}>Game</label>
                       {presetGame === "__custom__" ? (
                         <div style={{ display: "flex", gap: 4 }}>
-                          <input type="text" placeholder="New game..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customGameInput.trim()) { setPresetGame(customGameInput.trim()); setCustomGameInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                          <button onClick={() => { if (customGameInput.trim()) setPresetGame(customGameInput.trim()); setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                          <input type="text" placeholder="New game..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customGameInput.trim()) { addCustomValue("games", customGameInput.trim()); setPresetGame(customGameInput.trim()); setCustomGameInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                          <button onClick={() => { if (customGameInput.trim()) { addCustomValue("games", customGameInput.trim()); setPresetGame(customGameInput.trim()); } setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                         </div>
                       ) : (
                         <select value={allGames.includes(presetGame) ? presetGame : (presetGame ? "__show__" : "")} onChange={(e) => setPresetGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -1326,8 +1341,8 @@ export default function BankrollTracker({ session, onLoans }) {
                     <div style={{ flex: 1 }}><label style={labelStyle}>Location</label>
                       {presetLocation === "__custom__" ? (
                         <div style={{ display: "flex", gap: 4 }}>
-                          <input type="text" placeholder="New location..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customLocationInput.trim()) { setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                          <button onClick={() => { if (customLocationInput.trim()) setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                          <input type="text" placeholder="New location..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customLocationInput.trim()) { addCustomValue("locations", customLocationInput.trim()); setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                          <button onClick={() => { if (customLocationInput.trim()) { addCustomValue("locations", customLocationInput.trim()); setPresetLocation(customLocationInput.trim()); } setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                         </div>
                       ) : (
                         <select value={allLocations.includes(presetLocation) ? presetLocation : (presetLocation ? "__show__" : "")} onChange={(e) => setPresetLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -1374,8 +1389,8 @@ export default function BankrollTracker({ session, onLoans }) {
                 <div style={{ flex: 1 }}><label style={labelStyle}>Game</label>
                   {presetGame === "__custom__" ? (
                     <div style={{ display: "flex", gap: 4 }}>
-                      <input type="text" placeholder="New game..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customGameInput.trim()) { setPresetGame(customGameInput.trim()); setCustomGameInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                      <button onClick={() => { if (customGameInput.trim()) setPresetGame(customGameInput.trim()); setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                      <input type="text" placeholder="New game..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customGameInput.trim()) { addCustomValue("games", customGameInput.trim()); setPresetGame(customGameInput.trim()); setCustomGameInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                      <button onClick={() => { if (customGameInput.trim()) { addCustomValue("games", customGameInput.trim()); setPresetGame(customGameInput.trim()); } setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                     </div>
                   ) : (
                     <select value={allGames.includes(presetGame) ? presetGame : (presetGame ? "__show__" : "")} onChange={(e) => setPresetGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -1397,8 +1412,8 @@ export default function BankrollTracker({ session, onLoans }) {
                 <div style={{ flex: 1 }}><label style={labelStyle}>Location</label>
                   {presetLocation === "__custom__" ? (
                     <div style={{ display: "flex", gap: 4 }}>
-                      <input type="text" placeholder="New location..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customLocationInput.trim()) { setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                      <button onClick={() => { if (customLocationInput.trim()) setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                      <input type="text" placeholder="New location..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customLocationInput.trim()) { addCustomValue("locations", customLocationInput.trim()); setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                      <button onClick={() => { if (customLocationInput.trim()) { addCustomValue("locations", customLocationInput.trim()); setPresetLocation(customLocationInput.trim()); } setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                     </div>
                   ) : (
                     <select value={allLocations.includes(presetLocation) ? presetLocation : (presetLocation ? "__show__" : "")} onChange={(e) => setPresetLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
