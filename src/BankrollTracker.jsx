@@ -96,18 +96,31 @@ const CumulativeLine = ({ data, height = 140, color = "#2e7d32" }) => {
   }).join(" ");
   const zeroY = padTop + (1 - (0 - minY) / rangeY) * chartH;
 
-  // Find year boundaries for labels
-  const yearLabels = [];
+  // Find label boundaries (years for long ranges, days/months for short ranges)
+  const axisLabels = [];
   if (labels.length > 0 && labels[0]) {
-    let lastYear = "";
-    labels.forEach((label, i) => {
-      const year = label ? label.slice(0, 4) : "";
-      if (year && year !== lastYear) {
-        const x = padX + (i / (cumulative.length - 1)) * (w - padX * 2);
-        yearLabels.push({ x, year });
-        lastYear = year;
-      }
-    });
+    const isShortLabel = labels[0].length <= 2; // day numbers like "01", "15"
+    if (isShortLabel) {
+      // Show every few days
+      const step = Math.max(1, Math.floor(labels.length / 8));
+      labels.forEach((label, i) => {
+        if (i % step === 0 && label) {
+          const x = padX + (i / (cumulative.length - 1)) * (w - padX * 2);
+          axisLabels.push({ x, text: label });
+        }
+      });
+    } else {
+      // Year boundaries
+      let lastYear = "";
+      labels.forEach((label, i) => {
+        const year = label ? label.slice(0, 4) : "";
+        if (year && year !== lastYear) {
+          const x = padX + (i / (cumulative.length - 1)) * (w - padX * 2);
+          axisLabels.push({ x, text: year });
+          lastYear = year;
+        }
+      });
+    }
   }
 
   return (
@@ -116,10 +129,10 @@ const CumulativeLine = ({ data, height = 140, color = "#2e7d32" }) => {
       <polyline points={points} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       <text x={padX} y={zeroY - 4} fill="#bbb" fontSize="10">$0</text>
       <text x={w - padX} y={padTop + 12} fill={color} fontSize="10" textAnchor="end">{formatCurrency(cumulative[cumulative.length - 1])}</text>
-      {yearLabels.map((yl, i) => (
+      {axisLabels.map((al, i) => (
         <g key={i}>
-          <line x1={yl.x} y1={padTop} x2={yl.x} y2={height - padBottom} stroke="#e8e6e2" strokeWidth="0.5" />
-          <text x={yl.x} y={height - 6} fill="#bbb" fontSize="9" textAnchor="middle">{yl.year}</text>
+          <line x1={al.x} y1={padTop} x2={al.x} y2={height - padBottom} stroke="#e8e6e2" strokeWidth="0.5" />
+          <text x={al.x} y={height - 6} fill="#bbb" fontSize="9" textAnchor="middle">{al.text}</text>
         </g>
       ))}
     </svg>
@@ -471,6 +484,10 @@ export default function BankrollTracker({ session, onLoans }) {
 
   // ==================== DELETE SESSION ====================
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [editingSession, setEditingSession] = useState(null);
+  const [chartFilter, setChartFilter] = useState("all"); // all, year, lastyear, month, custom
+  const [chartCustomFrom, setChartCustomFrom] = useState("");
+  const [chartCustomTo, setChartCustomTo] = useState("");
   const handleDelete = async (id) => {
     await supabase.from("bankroll_sessions").delete().eq("id", id);
     setDeleteConfirm(null);
@@ -583,10 +600,29 @@ export default function BankrollTracker({ session, onLoans }) {
                 </div>
               </div>
 
-              {/* Cumulative Profit Chart */}
-              <div style={{ ...cardStyle, cursor: "default", padding: "12px" }}>
+              {/* Cumulative Profit Chart with time filters */}
+              <div onClick={() => setView("chart-detail")} style={{ ...cardStyle, padding: "12px" }}>
                 <div style={{ ...statLabel, marginBottom: 8, paddingLeft: 6 }}>Cumulative Profit</div>
                 <CumulativeLine data={[...sessions].reverse().map(s => ({ value: Number(s.net_profit || 0), label: s.start_time?.slice(0, 10) || "" }))} />
+              </div>
+
+              {/* Recent Sessions */}
+              <div style={{ ...cardStyle, cursor: "default" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div style={statLabel}>Recent Sessions</div>
+                  <button onClick={() => setView("sessions")} style={{ background: "none", border: "none", color: "#b8860b", fontSize: 12, cursor: "pointer", fontWeight: 500 }}>View All →</button>
+                </div>
+                {sessions.slice(0, 5).map((s) => (
+                  <div key={s.id} onClick={() => setDeleteConfirm(s)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2", cursor: "pointer" }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "#333" }}>{s.game || "Unknown"}</div>
+                      <div style={{ fontSize: 11, color: "#bbb" }}>{formatDateShort(s.start_time)} • {s.location}</div>
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: Number(s.net_profit) >= 0 ? "#2e7d32" : "#c62828" }}>
+                      {Number(s.net_profit) >= 0 ? "+" : "-"}{formatCurrencyFull(s.net_profit)}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Top Games */}
@@ -596,10 +632,10 @@ export default function BankrollTracker({ session, onLoans }) {
                   <div key={game} onClick={() => { setDetailData({ type: "game", name: game }); setView("game-detail"); }}
                     style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2", cursor: "pointer" }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{game}</div>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: "#333" }}>{game}</div>
                       <div style={{ fontSize: 11, color: "#bbb" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs</div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: d.profit >= 0 ? "#2e7d32" : "#c62828" }}>
                       {d.profit >= 0 ? "+" : "-"}{formatCurrencyFull(d.profit)}
                     </div>
                   </div>
@@ -613,30 +649,11 @@ export default function BankrollTracker({ session, onLoans }) {
                   <div key={loc} onClick={() => { setDetailData({ type: "location", name: loc }); setView("location-detail"); }}
                     style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2", cursor: "pointer" }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{loc}</div>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: "#333" }}>{loc}</div>
                       <div style={{ fontSize: 11, color: "#bbb" }}>{d.sessions} sessions • {formatHoursFull(d.minutes)}hrs</div>
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: d.profit >= 0 ? "#00E676" : "#FF5252" }}>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: d.profit >= 0 ? "#2e7d32" : "#c62828" }}>
                       {d.profit >= 0 ? "+" : "-"}{formatCurrencyFull(d.profit)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Recent Sessions */}
-              <div style={{ ...cardStyle, cursor: "default" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                  <div style={statLabel}>Recent Sessions</div>
-                  <button onClick={() => setView("sessions")} style={{ background: "none", border: "none", color: "#b8860b", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>View All →</button>
-                </div>
-                {sessions.slice(0, 5).map((s) => (
-                  <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #e8e6e2" }}>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "#333" }}>{s.game || "Unknown"}</div>
-                      <div style={{ fontSize: 11, color: "#bbb" }}>{formatDateShort(s.start_time)} • {s.location}</div>
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: Number(s.net_profit) >= 0 ? "#00E676" : "#FF5252" }}>
-                      {Number(s.net_profit) >= 0 ? "+" : "-"}{formatCurrencyFull(s.net_profit)}
                     </div>
                   </div>
                 ))}
@@ -916,12 +933,13 @@ export default function BankrollTracker({ session, onLoans }) {
               <label style={labelStyle}>Game</label>
               {newGame === "__custom__" ? (
                 <div style={{ display: "flex", gap: 6 }}>
-                  <input type="text" placeholder="New game name..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                  <button onClick={() => { if (customGameInput.trim()) { setNewGame(customGameInput.trim()); } else { setNewGame("Dealers Choice"); } setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <input type="text" placeholder="New game name..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customGameInput.trim()) { setNewGame(customGameInput.trim()); setCustomGameInput(""); }}} style={{ ...inputStyle, flex: 1 }} />
+                  <button onClick={() => { if (customGameInput.trim()) { setNewGame(customGameInput.trim()); } setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                   <button onClick={() => { setNewGame("Dealers Choice"); setCustomGameInput(""); }} style={{ background: "#e8e6e2", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✕</button>
                 </div>
               ) : (
-                <select value={newGame} onChange={(e) => setNewGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <select value={allGames.includes(newGame) ? newGame : "__show_custom__"} onChange={(e) => setNewGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                  {!allGames.includes(newGame) && newGame && newGame !== "__custom__" && <option value="__show_custom__">{newGame} (custom)</option>}
                   {allGames.map(g => <option key={g} value={g}>{g}</option>)}
                   <option value="__custom__">+ Add new game...</option>
                 </select>
@@ -931,11 +949,12 @@ export default function BankrollTracker({ session, onLoans }) {
               <label style={labelStyle}>Variant</label>
               {newVariant === "__custom__" ? (
                 <div style={{ display: "flex", gap: 4 }}>
-                  <input type="text" placeholder="New..." autoFocus value={customVariantInput} onChange={(e) => setCustomVariantInput(e.target.value)} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                  <button onClick={() => { if (customVariantInput.trim()) { setNewVariant(customVariantInput.trim()); } else { setNewVariant("Cash Game"); } setCustomVariantInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <input type="text" placeholder="New..." autoFocus value={customVariantInput} onChange={(e) => setCustomVariantInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customVariantInput.trim()) { setNewVariant(customVariantInput.trim()); setCustomVariantInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                  <button onClick={() => { if (customVariantInput.trim()) { setNewVariant(customVariantInput.trim()); } setCustomVariantInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                 </div>
               ) : (
-                <select value={newVariant} onChange={(e) => setNewVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <select value={allVariants.includes(newVariant) ? newVariant : "__show_custom__"} onChange={(e) => setNewVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                  {!allVariants.includes(newVariant) && newVariant && newVariant !== "__custom__" && <option value="__show_custom__">{newVariant}</option>}
                   {allVariants.map(v => <option key={v} value={v}>{v}</option>)}
                   <option value="__custom__">+ Add new...</option>
                 </select>
@@ -947,13 +966,14 @@ export default function BankrollTracker({ session, onLoans }) {
             <label style={labelStyle}>Location</label>
             {newLocation === "__custom__" ? (
               <div style={{ display: "flex", gap: 6 }}>
-                <input type="text" placeholder="New location name..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} style={{ ...inputStyle, flex: 1 }} />
-                <button onClick={() => { if (customLocationInput.trim()) { setNewLocation(customLocationInput.trim()); } else { setNewLocation(""); } setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                <input type="text" placeholder="New location name..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customLocationInput.trim()) { setNewLocation(customLocationInput.trim()); setCustomLocationInput(""); }}} style={{ ...inputStyle, flex: 1 }} />
+                <button onClick={() => { if (customLocationInput.trim()) { setNewLocation(customLocationInput.trim()); } setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                 <button onClick={() => { setNewLocation(""); setCustomLocationInput(""); }} style={{ background: "#e8e6e2", border: "none", borderRadius: 10, color: "#999", padding: "0 14px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✕</button>
               </div>
             ) : (
-              <select value={newLocation} onChange={(e) => setNewLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+              <select value={allLocations.includes(newLocation) ? newLocation : (newLocation ? "__show_custom__" : "")} onChange={(e) => setNewLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
                 <option value="">Select location...</option>
+                {!allLocations.includes(newLocation) && newLocation && newLocation !== "__custom__" && <option value="__show_custom__">{newLocation} (custom)</option>}
                 {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
                 <option value="__custom__">+ Add new location...</option>
               </select>
@@ -965,11 +985,12 @@ export default function BankrollTracker({ session, onLoans }) {
               <label style={labelStyle}>Type</label>
               {newSessionType === "__custom__" ? (
                 <div style={{ display: "flex", gap: 4 }}>
-                  <input type="text" placeholder="New type..." autoFocus value={customTypeInput} onChange={(e) => setCustomTypeInput(e.target.value)} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
-                  <button onClick={() => { if (customTypeInput.trim()) { setNewSessionType(customTypeInput.trim()); } else { setNewSessionType("Casino"); } setCustomTypeInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                  <input type="text" placeholder="New type..." autoFocus value={customTypeInput} onChange={(e) => setCustomTypeInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customTypeInput.trim()) { setNewSessionType(customTypeInput.trim()); setCustomTypeInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                  <button onClick={() => { if (customTypeInput.trim()) { setNewSessionType(customTypeInput.trim()); } setCustomTypeInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
                 </div>
               ) : (
-                <select value={newSessionType} onChange={(e) => setNewSessionType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                <select value={allTypes.includes(newSessionType) ? newSessionType : "__show_custom__"} onChange={(e) => setNewSessionType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                  {!allTypes.includes(newSessionType) && newSessionType && newSessionType !== "__custom__" && <option value="__show_custom__">{newSessionType}</option>}
                   {allTypes.map(t => <option key={t} value={t}>{t}</option>)}
                   <option value="__custom__">+ Add new...</option>
                 </select>
@@ -1032,23 +1053,145 @@ export default function BankrollTracker({ session, onLoans }) {
         </div>
       )}
 
-      {/* ==================== DELETE CONFIRM ==================== */}
-      <Modal isOpen={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Session Details">
-        {deleteConfirm && (
+      {/* ==================== SESSION DETAIL (EDIT/DELETE) ==================== */}
+      <Modal isOpen={!!deleteConfirm} onClose={() => { setDeleteConfirm(null); setEditingSession(null); }} title={editingSession ? "Edit Session" : "Session Details"}>
+        {deleteConfirm && !editingSession && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ background: "#f0eee9", borderRadius: 12, padding: 16, textAlign: "center" }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#333" }}>{deleteConfirm.game}</div>
-              <div style={{ fontSize: 28, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", color: Number(deleteConfirm.net_profit) >= 0 ? "#00E676" : "#FF5252", marginTop: 6 }}>
+              <div style={{ fontSize: 14, fontWeight: 500, color: "#333" }}>{deleteConfirm.game}</div>
+              <div style={{ fontSize: 28, fontWeight: 500, color: Number(deleteConfirm.net_profit) >= 0 ? "#2e7d32" : "#c62828", marginTop: 6 }}>
                 {Number(deleteConfirm.net_profit) >= 0 ? "+" : ""}{formatCurrencyFull(deleteConfirm.net_profit)}
               </div>
               <div style={{ fontSize: 12, color: "#aaa", marginTop: 6 }}>{formatDate(deleteConfirm.start_time)} • {deleteConfirm.location} • {formatHoursFull(deleteConfirm.playing_minutes)}hrs</div>
               {Number(deleteConfirm.buyin) > 0 && <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Buy-in: {formatCurrencyFull(deleteConfirm.buyin)} • Cash-out: {formatCurrencyFull(deleteConfirm.cashout)}</div>}
               {deleteConfirm.note && <div style={{ fontSize: 12, color: "#999", marginTop: 6 }}>{deleteConfirm.note}</div>}
             </div>
-            <button onClick={() => handleDelete(deleteConfirm.id)} style={{ padding: "12px", background: "#c62828", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }}>Delete Session</button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => {
+                setEditingSession({
+                  id: deleteConfirm.id,
+                  date: deleteConfirm.start_time?.slice(0, 10) || "",
+                  game: deleteConfirm.game || "",
+                  variant: deleteConfirm.variant || "Cash Game",
+                  location: deleteConfirm.location || "",
+                  sessionType: deleteConfirm.session_type || "Casino",
+                  netProfit: String(Number(deleteConfirm.net_profit) || 0),
+                  hours: String((Number(deleteConfirm.playing_minutes) || 0) / 60),
+                  smallBlind: String(Number(deleteConfirm.small_blind) || ""),
+                  bigBlind: String(Number(deleteConfirm.big_blind) || ""),
+                  note: deleteConfirm.note || "",
+                });
+              }} style={{ flex: 1, padding: "12px", background: "#1565c0", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14 }}>Edit</button>
+              <button onClick={() => handleDelete(deleteConfirm.id)} style={{ flex: 1, padding: "12px", background: "#c62828", border: "none", borderRadius: 10, color: "#fff", fontWeight: 500, cursor: "pointer", fontSize: 14 }}>Delete</button>
+            </div>
+          </div>
+        )}
+        {editingSession && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div><label style={labelStyle}>Date</label><input type="date" value={editingSession.date} onChange={(e) => setEditingSession({ ...editingSession, date: e.target.value })} style={inputStyle} /></div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1 }}><label style={labelStyle}>Game</label>
+                <select value={allGames.includes(editingSession.game) ? editingSession.game : ""} onChange={(e) => setEditingSession({ ...editingSession, game: e.target.value })} style={{ ...inputStyle, cursor: "pointer" }}>
+                  {!allGames.includes(editingSession.game) && editingSession.game && <option value="">{editingSession.game}</option>}
+                  {allGames.map(g => <option key={g} value={g}>{g}</option>)}
+                </select>
+              </div>
+              <div style={{ flex: 1 }}><label style={labelStyle}>Location</label>
+                <select value={allLocations.includes(editingSession.location) ? editingSession.location : ""} onChange={(e) => setEditingSession({ ...editingSession, location: e.target.value })} style={{ ...inputStyle, cursor: "pointer" }}>
+                  {!allLocations.includes(editingSession.location) && editingSession.location && <option value="">{editingSession.location}</option>}
+                  {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
+            </div>
+            <div><label style={labelStyle}>Net Profit ($)</label><input type="number" value={editingSession.netProfit} onChange={(e) => setEditingSession({ ...editingSession, netProfit: e.target.value })} style={inputStyle} step="any" /></div>
+            <div><label style={labelStyle}>Hours Played</label><input type="number" value={editingSession.hours} onChange={(e) => setEditingSession({ ...editingSession, hours: e.target.value })} style={inputStyle} min="0" step="0.5" /></div>
+            <div><label style={labelStyle}>Note</label><input type="text" value={editingSession.note} onChange={(e) => setEditingSession({ ...editingSession, note: e.target.value })} style={inputStyle} /></div>
+            <button onClick={async () => {
+              const { error } = await supabase.from("bankroll_sessions").update({
+                start_time: new Date(editingSession.date + "T12:00:00").toISOString(),
+                game: editingSession.game,
+                variant: editingSession.variant,
+                location: editingSession.location,
+                session_type: editingSession.sessionType,
+                net_profit: parseFloat(editingSession.netProfit) || 0,
+                playing_minutes: Math.round((parseFloat(editingSession.hours) || 0) * 60),
+                small_blind: parseFloat(editingSession.smallBlind) || 0,
+                big_blind: parseFloat(editingSession.bigBlind) || 0,
+                note: editingSession.note,
+              }).eq("id", editingSession.id);
+              if (!error) { setEditingSession(null); setDeleteConfirm(null); fetchData(); }
+            }} style={{ padding: "14px", background: "#2e7d32", border: "none", borderRadius: 12, color: "#fff", fontSize: 16, fontWeight: 500, cursor: "pointer" }}>Save Changes</button>
           </div>
         )}
       </Modal>
+
+      {/* ==================== CHART DETAIL WITH FILTERS ==================== */}
+      {view === "chart-detail" && (() => {
+        let chartSessions = [...sessions].reverse();
+        let chartTitle = "All Time";
+        if (chartFilter === "month") {
+          chartSessions = chartSessions.filter(s => s.start_time?.startsWith(thisMonth));
+          chartTitle = "This Month";
+        } else if (chartFilter === "year") {
+          chartSessions = chartSessions.filter(s => s.start_time?.startsWith(thisYear));
+          chartTitle = thisYear;
+        } else if (chartFilter === "lastyear") {
+          chartSessions = chartSessions.filter(s => s.start_time?.startsWith(lastYear));
+          chartTitle = lastYear;
+        } else if (chartFilter === "custom" && chartCustomFrom && chartCustomTo) {
+          chartSessions = chartSessions.filter(s => s.start_time?.slice(0, 10) >= chartCustomFrom && s.start_time?.slice(0, 10) <= chartCustomTo);
+          chartTitle = `${chartCustomFrom} to ${chartCustomTo}`;
+        }
+        const chartProfit = chartSessions.reduce((sum, s) => sum + Number(s.net_profit || 0), 0);
+        const useDay = chartFilter === "month";
+        return (
+          <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+            <button onClick={() => { setView("dashboard"); setChartFilter("all"); }} style={{ background: "none", border: "none", color: "#999", fontSize: 14, cursor: "pointer", textAlign: "left", padding: 0 }}>‹ Back to Dashboard</button>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500 }}>Cumulative Profit</h2>
+
+            {/* Time filter buttons */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[
+                { key: "all", label: "All Time" },
+                { key: "month", label: "This Month" },
+                { key: "year", label: thisYear },
+                { key: "lastyear", label: lastYear },
+                { key: "custom", label: "Custom" },
+              ].map(f => (
+                <button key={f.key} onClick={() => setChartFilter(f.key)} style={{
+                  padding: "6px 14px", borderRadius: 20, border: "1px solid #e8e6e2", fontSize: 12, fontWeight: 500, cursor: "pointer",
+                  background: chartFilter === f.key ? "#2e7d32" : "#fff", color: chartFilter === f.key ? "#fff" : "#888",
+                }}>{f.label}</button>
+              ))}
+            </div>
+
+            {chartFilter === "custom" && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ flex: 1 }}><label style={labelStyle}>From</label><input type="date" value={chartCustomFrom} onChange={(e) => setChartCustomFrom(e.target.value)} style={inputStyle} /></div>
+                <div style={{ flex: 1 }}><label style={labelStyle}>To</label><input type="date" value={chartCustomTo} onChange={(e) => setChartCustomTo(e.target.value)} style={inputStyle} /></div>
+              </div>
+            )}
+
+            <div style={{ ...cardStyle, cursor: "default", padding: "14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={statLabel}>{chartTitle}</div>
+                <div style={{ fontSize: 16, fontWeight: 500, color: chartProfit >= 0 ? "#2e7d32" : "#c62828" }}>
+                  {chartProfit >= 0 ? "+" : ""}{formatCurrencyFull(chartProfit)}
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: "#bbb", marginBottom: 10 }}>{chartSessions.length} sessions</div>
+              {chartSessions.length >= 2 ? (
+                <CumulativeLine data={chartSessions.map(s => ({
+                  value: Number(s.net_profit || 0),
+                  label: useDay ? s.start_time?.slice(8, 10) : s.start_time?.slice(0, 10) || ""
+                }))} height={200} />
+              ) : (
+                <div style={{ textAlign: "center", color: "#bbb", padding: 30 }}>Not enough data for this period</div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ==================== ALL YEARS VIEW ==================== */}
       {view === "years" && (
@@ -1158,26 +1301,46 @@ export default function BankrollTracker({ session, onLoans }) {
                   <div><label style={labelStyle}>Preset Name</label><input type="text" value={presetName} onChange={(e) => setPresetName(e.target.value)} style={inputStyle} placeholder="e.g. Sortis Omaha" /></div>
                   <div style={{ display: "flex", gap: 6 }}>
                     <div style={{ flex: 1 }}><label style={labelStyle}>Game</label>
-                      <select value={presetGame} onChange={(e) => setPresetGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                        <option value="">Select...</option>
-                        {allGames.map(g => <option key={g} value={g}>{g}</option>)}
-                      </select>
+                      {presetGame === "__custom__" ? (
+                        <div style={{ display: "flex", gap: 4 }}>
+                          <input type="text" placeholder="New game..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customGameInput.trim()) { setPresetGame(customGameInput.trim()); setCustomGameInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                          <button onClick={() => { if (customGameInput.trim()) setPresetGame(customGameInput.trim()); setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                        </div>
+                      ) : (
+                        <select value={allGames.includes(presetGame) ? presetGame : (presetGame ? "__show__" : "")} onChange={(e) => setPresetGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                          <option value="">Select...</option>
+                          {!allGames.includes(presetGame) && presetGame && presetGame !== "__custom__" && <option value="__show__">{presetGame}</option>}
+                          {allGames.map(g => <option key={g} value={g}>{g}</option>)}
+                          <option value="__custom__">+ Add new...</option>
+                        </select>
+                      )}
                     </div>
                     <div style={{ flex: 1 }}><label style={labelStyle}>Variant</label>
-                      <select value={presetVariant} onChange={(e) => setPresetVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                      <select value={allVariants.includes(presetVariant) ? presetVariant : "__show__"} onChange={(e) => setPresetVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                        {!allVariants.includes(presetVariant) && presetVariant && <option value="__show__">{presetVariant}</option>}
                         {allVariants.map(v => <option key={v} value={v}>{v}</option>)}
                       </select>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     <div style={{ flex: 1 }}><label style={labelStyle}>Location</label>
-                      <select value={presetLocation} onChange={(e) => setPresetLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                        <option value="">Select...</option>
-                        {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
-                      </select>
+                      {presetLocation === "__custom__" ? (
+                        <div style={{ display: "flex", gap: 4 }}>
+                          <input type="text" placeholder="New location..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customLocationInput.trim()) { setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                          <button onClick={() => { if (customLocationInput.trim()) setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                        </div>
+                      ) : (
+                        <select value={allLocations.includes(presetLocation) ? presetLocation : (presetLocation ? "__show__" : "")} onChange={(e) => setPresetLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                          <option value="">Select...</option>
+                          {!allLocations.includes(presetLocation) && presetLocation && presetLocation !== "__custom__" && <option value="__show__">{presetLocation}</option>}
+                          {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                          <option value="__custom__">+ Add new...</option>
+                        </select>
+                      )}
                     </div>
                     <div style={{ flex: 1 }}><label style={labelStyle}>Type</label>
-                      <select value={presetType} onChange={(e) => setPresetType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                      <select value={allTypes.includes(presetType) ? presetType : "__show__"} onChange={(e) => setPresetType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                        {!allTypes.includes(presetType) && presetType && <option value="__show__">{presetType}</option>}
                         {allTypes.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
@@ -1209,26 +1372,46 @@ export default function BankrollTracker({ session, onLoans }) {
               <div><label style={labelStyle}>Preset Name</label><input type="text" value={presetName} onChange={(e) => setPresetName(e.target.value)} style={inputStyle} placeholder="e.g. Sortis Omaha" autoFocus /></div>
               <div style={{ display: "flex", gap: 6 }}>
                 <div style={{ flex: 1 }}><label style={labelStyle}>Game</label>
-                  <select value={presetGame} onChange={(e) => setPresetGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                    <option value="">Select...</option>
-                    {allGames.map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
+                  {presetGame === "__custom__" ? (
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <input type="text" placeholder="New game..." autoFocus value={customGameInput} onChange={(e) => setCustomGameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customGameInput.trim()) { setPresetGame(customGameInput.trim()); setCustomGameInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                      <button onClick={() => { if (customGameInput.trim()) setPresetGame(customGameInput.trim()); setCustomGameInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                    </div>
+                  ) : (
+                    <select value={allGames.includes(presetGame) ? presetGame : (presetGame ? "__show__" : "")} onChange={(e) => setPresetGame(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                      <option value="">Select...</option>
+                      {!allGames.includes(presetGame) && presetGame && presetGame !== "__custom__" && <option value="__show__">{presetGame}</option>}
+                      {allGames.map(g => <option key={g} value={g}>{g}</option>)}
+                      <option value="__custom__">+ Add new...</option>
+                    </select>
+                  )}
                 </div>
                 <div style={{ flex: 1 }}><label style={labelStyle}>Variant</label>
-                  <select value={presetVariant} onChange={(e) => setPresetVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                  <select value={allVariants.includes(presetVariant) ? presetVariant : "__show__"} onChange={(e) => setPresetVariant(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                    {!allVariants.includes(presetVariant) && presetVariant && <option value="__show__">{presetVariant}</option>}
                     {allVariants.map(v => <option key={v} value={v}>{v}</option>)}
                   </select>
                 </div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <div style={{ flex: 1 }}><label style={labelStyle}>Location</label>
-                  <select value={presetLocation} onChange={(e) => setPresetLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
-                    <option value="">Select...</option>
-                    {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
+                  {presetLocation === "__custom__" ? (
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <input type="text" placeholder="New location..." autoFocus value={customLocationInput} onChange={(e) => setCustomLocationInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && customLocationInput.trim()) { setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }}} style={{ ...inputStyle, flex: 1, padding: "12px 8px" }} />
+                      <button onClick={() => { if (customLocationInput.trim()) setPresetLocation(customLocationInput.trim()); setCustomLocationInput(""); }} style={{ background: "#2e7d32", border: "none", borderRadius: 10, color: "#fff", padding: "0 10px", fontWeight: 500, cursor: "pointer", fontSize: 13 }}>✓</button>
+                    </div>
+                  ) : (
+                    <select value={allLocations.includes(presetLocation) ? presetLocation : (presetLocation ? "__show__" : "")} onChange={(e) => setPresetLocation(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                      <option value="">Select...</option>
+                      {!allLocations.includes(presetLocation) && presetLocation && presetLocation !== "__custom__" && <option value="__show__">{presetLocation}</option>}
+                      {allLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                      <option value="__custom__">+ Add new...</option>
+                    </select>
+                  )}
                 </div>
                 <div style={{ flex: 1 }}><label style={labelStyle}>Type</label>
-                  <select value={presetType} onChange={(e) => setPresetType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                  <select value={allTypes.includes(presetType) ? presetType : "__show__"} onChange={(e) => setPresetType(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                    {!allTypes.includes(presetType) && presetType && <option value="__show__">{presetType}</option>}
                     {allTypes.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
